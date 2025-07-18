@@ -1,0 +1,189 @@
+name: Deploy Backend Lambdas
+
+on:
+  push:
+    branches: [main, develop]
+    paths: ['backend/**']
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Deployment stage'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Install Serverless Framework
+        run: npm install -g serverless@3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Determine deployment stage
+        id: stage
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "stage=${{ github.event.inputs.stage }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "stage=prod" >> $GITHUB_OUTPUT
+          else
+            echo "stage=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Pre-deployment validation
+        run: |
+          cd backend
+          echo "Validating Lambda structure..."
+          
+          # Check that all required handler files exist
+          handlers=(
+            "src/functions/students/handler.js"
+            "src/functions/recruiters/handler.js"
+            "src/functions/auth/handler.js"
+          )
+          
+          for handler in "${handlers[@]}"; do
+            if [ -f "$handler" ]; then
+              echo "SUCCESS: Found $handler"
+            else
+              echo "FAILED: Missing $handler"
+              exit 1
+            fi
+          done
+          
+          # Check shared config exists
+          if [ -f "src/shared/config/firebase.js" ]; then
+            echo "SUCCESS: Found Firebase config"
+          else
+            echo "WARNING: Missing src/shared/config/firebase.js"
+          fi
+
+      - name: Deploy to AWS Lambda
+        run: |
+          cd backend
+          echo "Deploying to stage: ${{ steps.stage.outputs.stage }}"
+          serverless deploy --stage ${{ steps.stage.outputs.stage }} --verbose
+        env:
+          FIREBASE_PROJECT_ID: ${{ steps.stage.outputs.stage == 'prod' && secrets.FIREBASE_PROJECT_ID_PROD || secrets.FIREBASE_PROJECT_ID_DEV }}
+          FIREBASE_PRIVATE_KEY: ${{ steps.stage.outputs.stage == 'prod' && secrets.FIREBASE_PRIVATE_KEY_PROD || secrets.FIREBASE_PRIVATE_KEY_DEV }}
+          LINKEDIN_CLIENT_ID: ${{ steps.stage.outputs.stage == 'prod' && secrets.LINKEDIN_CLIENT_ID_PROD || secrets.LINKEDIN_CLIENT_ID_DEV }}
+          LINKEDIN_CLIENT_SECRET: ${{ steps.stage.outputs.stage == 'prod' && secrets.LINKEDIN_CLIENT_SECRET_PROD || secrets.LINKEDIN_CLIENT_SECRET_DEV }}
+
+      - name: Get deployment info
+        id: deploy-info
+        run: |
+          cd backend
+          API_URL=$(serverless info --stage ${{ steps.stage.outputs.stage }} | grep ServiceEndpoint | awk '{print $2}')
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+          
+          # Get function names
+          FUNCTIONS=$(serverless info --stage ${{ steps.stage.outputs.stage }} | grep -A 10 "functions:" | tail -n +2 | head -n -1)
+          echo "functions<<EOF" >> $GITHUB_OUTPUT
+          echo "$FUNCTIONS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Test individual Lambda functions
+        run: |
+          echo "Testing individual Lambda functions..."
+          API_URL="${{ steps.deploy-info.outputs.api_url }}"
+          
+          # Test Students endpoint
+          echo "Testing Students Lambda..."
+          if curl -f --connect-timeout 10 "$API_URL/students" -X OPTIONS > /dev/null 2>&1; then
+            echo "SUCCESS: Students Lambda responding to CORS preflight"
+          else
+            echo "WARNING: Students Lambda not responding"
+          fi
+          
+          # Test Recruiters endpoint
+          echo "Testing Recruiters Lambda..."
+          if curl -f --connect-timeout 10 "$API_URL/recruiters" -X OPTIONS > /dev/null 2>&1; then
+            echo "SUCCESS: Recruiters Lambda responding to CORS preflight"
+          else
+            echo "WARNING: Recruiters Lambda not responding"
+          fi
+          
+          # Test Auth endpoint
+          echo "Testing Auth Lambda..."
+          if curl -f --connect-timeout 10 "$API_URL/auth" -X OPTIONS > /dev/null 2>&1; then
+            echo "SUCCESS: Auth Lambda responding to CORS preflight"
+          else
+            echo "WARNING: Auth Lambda not responding"
+          fi
+
+      - name: Update API URL in repository
+        if: steps.stage.outputs.stage == 'prod'
+        run: |
+          # This could update a config file or create an issue with the new URL
+          echo "Production API URL: ${{ steps.deploy-info.outputs.api_url }}"
+          echo "Update your frontend environment variables with this URL"
+
+      - name: Deployment summary
+        run: |
+          echo "## Lambda Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "**Stage:** ${{ steps.stage.outputs.stage }}" >> $GITHUB_STEP_SUMMARY
+          echo "**API Gateway URL:** ${{ steps.deploy-info.outputs.api_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Region:** us-east-1" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date)" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Deployed Functions" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.deploy-info.outputs.functions }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.stage.outputs.stage }}" = "prod" ]; then
+            echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+            echo "- Update frontend environment variables" >> $GITHUB_STEP_SUMMARY
+            echo "- Test all API endpoints" >> $GITHUB_STEP_SUMMARY
+            echo "- Monitor Lambda function logs" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Cleanup on failure
+        if: failure()
+        run: |
+          echo "FAILED: Deployment failed! Check the logs above for details."
+          echo "## Deployment Failed" >> $GITHUB_STEP_SUMMARY
+          echo "**Stage:** ${{ steps.stage.outputs.stage }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Check the workflow logs for details**" >> $GITHUB_STEP_SUMMARY
+          
+          # Optional: Could attempt to rollback here
+          # cd backend
+          # serverless rollback --timestamp PREVIOUS_TIMESTAMP
+
+  # Optional: Post-deployment notifications
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: success() && github.ref == 'refs/heads/main'
+    steps:
+      - name: Notify team
+        run: |
+          echo "ResumeBook backend deployed to production!"
+          echo "Team members can now test the updated API endpoints."
+          # Here you could add Slack/Discord/Email notifications

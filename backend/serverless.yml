@@ -1,0 +1,53 @@
+service: resumebook-backend
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    FIREBASE_PROJECT_ID: ${env:FIREBASE_PROJECT_ID}
+    FIREBASE_PRIVATE_KEY: ${env:FIREBASE_PRIVATE_KEY}
+    LINKEDIN_CLIENT_ID: ${env:LINKEDIN_CLIENT_ID}
+    LINKEDIN_CLIENT_SECRET: ${env:LINKEDIN_CLIENT_SECRET}
+
+plugins:
+  - serverless-offline
+
+functions:
+  studentsHandler:
+    handler: src/functions/students/handler.main
+    events:
+      - http:
+          path: students
+          method: ANY
+          cors: true
+      - http:
+          path: students/{proxy+}
+          method: ANY
+          cors: true
+
+  recruitersHandler:
+    handler: src/functions/recruiters/handler.main
+    events:
+      - http:
+          path: recruiters
+          method: ANY
+          cors: true
+      - http:
+          path: recruiters/{proxy+}
+          method: ANY
+          cors: true
+
+  authHandler:
+    handler: src/functions/auth/handler.main
+    events:
+      - http:
+          path: auth
+          method: ANY
+          cors: true
+      - http:
+          path: auth/{proxy+}
+          method: ANY
+          cors: true
