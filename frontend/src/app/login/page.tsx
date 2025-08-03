@@ -7,7 +7,21 @@ import Link from 'next/link'
 //Images for Login
 import { FcGoogle } from "react-icons/fc";
 import { MdMailOutline } from "react-icons/md";
+import { FaLinkedin } from "react-icons/fa6";
 
+
+const handleCustomLogin = async () => {
+    const res = await fetch('/api/linkedin-token'); // Your API that calls Lambda or proxy
+    const { token } = await res.json(); // Custom Firebase token from backend
+    const router = useRouter();
+    try {
+        await signInWithCustomToken(auth, token);
+        router.push('/dashboard');
+    } catch (err) {
+        console.error(err);
+        alert('Failed to sign in with custom token');
+    }
+};
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -60,6 +74,14 @@ export default function LoginPage() {
                     >
                         <FcGoogle size={20} />
                         <span className="text-sm font-medium">Login with Google</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleCustomLogin}
+                        className="flex items-center gap-2 bg-white hover:bg-gray-100 text-black border border-gray-300 px-4 py-2 rounded-sm shadow-sm focus:outline-none focus:ring-2 mx-auto my-2"
+                    >
+                        <FaLinkedin size={20} className='text-[#0077B5]' />
+                        <span className="text-sm font-medium">Login with LinkedIn</span>
                     </button>
                     <div className='text-sm text-center text-gray-600'>
                         Don't have an account?{' '}

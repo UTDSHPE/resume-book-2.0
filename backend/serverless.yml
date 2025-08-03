@@ -1,53 +1,50 @@
 service: resumebook-backend
+frameworkVersion: '3'
 
 provider:
   name: aws
-  runtime: nodejs18.x
-  stage: ${opt:stage, 'dev'}
+  runtime: nodejs22.x
   region: us-east-1
+  stage: ${opt:stage, 'dev'}
   environment:
-    NODE_ENV: ${self:provider.stage}
     FIREBASE_PROJECT_ID: ${env:FIREBASE_PROJECT_ID}
     FIREBASE_PRIVATE_KEY: ${env:FIREBASE_PRIVATE_KEY}
     LINKEDIN_CLIENT_ID: ${env:LINKEDIN_CLIENT_ID}
     LINKEDIN_CLIENT_SECRET: ${env:LINKEDIN_CLIENT_SECRET}
 
-plugins:
-  - serverless-offline
-
 functions:
-  studentsHandler:
+  students:
     handler: src/functions/students/handler.main
     events:
       - http:
           path: students
-          method: ANY
-          cors: true
+          method: get
       - http:
-          path: students/{proxy+}
-          method: ANY
-          cors: true
+          path: students
+          method: post
+      - http:
+          path: students/{id}
+          method: get
+      - http:
+          path: students/{id}
+          method: put
+      - http:
+          path: students/{id}
+          method: delete
 
-  recruitersHandler:
+  recruiters:
     handler: src/functions/recruiters/handler.main
     events:
       - http:
-          path: recruiters
-          method: ANY
-          cors: true
-      - http:
-          path: recruiters/{proxy+}
-          method: ANY
-          cors: true
+          path: recruiters/search
+          method: post
 
-  authHandler:
+  auth:
     handler: src/functions/auth/handler.main
     events:
       - http:
-          path: auth
-          method: ANY
-          cors: true
+          path: auth/linkedin
+          method: get
       - http:
-          path: auth/{proxy+}
-          method: ANY
-          cors: true
+          path: auth/linkedin/callback
+          method: get
