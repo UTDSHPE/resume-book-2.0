@@ -8,7 +8,7 @@
 name: CI Checks
 
 on:
-  pull_request:
+  push:
     branches: [main, develop]
     paths:
       - 'frontend/**'
