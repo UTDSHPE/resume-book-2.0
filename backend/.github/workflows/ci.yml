@@ -9,10 +9,11 @@ name: CI Checks
 
 on:
   push:
-    branches: [main, develop]
+    branches: main
     paths:
       - 'frontend/**'
       - 'backend/**'
+      - '.github/**'
 
 jobs:
   lint:
