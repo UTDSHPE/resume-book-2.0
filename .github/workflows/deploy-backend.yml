@@ -52,3 +52,4 @@ jobs:
             echo "stage=${{ github.event.inputs.stage }}" >> $GITHUB_OUTPUT
           elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "stage=prod" >> $GITHUB_OUTPUT
+          fi
