@@ -7,7 +7,7 @@ provider:
   runtime: nodejs22.x
   region: us-east-1
   stage: ${opt:stage, 'prod'}
-  environment:
+  environment: 
     FIREBASE_PROJECT_ID: ${env:FIREBASE_PROJECT_ID}
     FIREBASE_PRIVATE_KEY: ${env:FIREBASE_PRIVATE_KEY}
     LINKEDIN_CLIENT_ID: ${env:LINKEDIN_CLIENT_ID}

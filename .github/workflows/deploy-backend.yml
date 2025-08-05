@@ -18,7 +18,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    environment: Credentials
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -57,4 +57,9 @@ jobs:
 
       - name: Deploy with Serverless
         working-directory: backend
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
         run: npx serverless deploy --stage ${{ steps.stage.outputs.stage }}
