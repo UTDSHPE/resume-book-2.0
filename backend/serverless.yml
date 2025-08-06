@@ -19,9 +19,6 @@ provider:
     LINKEDIN_CLIENT_ID: ${env:LINKEDIN_CLIENT_ID}
     LINKEDIN_CLIENT_SECRET: ${env:LINKEDIN_CLIENT_SECRET}
 
-package:
-  individually: true
-  
 custom:
   esbuild:
     bundle: true        # bundle & tree-shake
