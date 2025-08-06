@@ -1,5 +1,5 @@
 service: resumebook-backend
-frameworkVersion: '3'
+frameworkVersion: '4'
 
 package:
   individually: true
@@ -27,6 +27,7 @@ custom:
     target: 'node22'    
     external:
       - aws-sdk         # exclude AWS SDK (Lambda provides it)
+
 functions:
   students:
     handler: src/functions/students/handler.main
