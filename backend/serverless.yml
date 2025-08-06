@@ -5,6 +5,9 @@ package:
   individually: true
   excludeDevDependencies: true
 
+plugins: 
+  - serverless-esbuild
+
 provider:
   name: aws
   runtime: nodejs22.x
@@ -16,6 +19,17 @@ provider:
     LINKEDIN_CLIENT_ID: ${env:LINKEDIN_CLIENT_ID}
     LINKEDIN_CLIENT_SECRET: ${env:LINKEDIN_CLIENT_SECRET}
 
+package:
+  individually: true
+  
+custom:
+  esbuild:
+    bundle: true        # bundle & tree-shake
+    minify: false
+    sourcemap: false
+    target: 'node22'    
+    external:
+      - aws-sdk         # exclude AWS SDK (Lambda provides it)
 functions:
   students:
     handler: src/functions/students/handler.main

@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "eslint": "^9.32.0"
+    "eslint": "^9.32.0",
+    "serverless-esbuild": "^1.55.1"
   }
 }
