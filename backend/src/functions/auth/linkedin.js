@@ -15,6 +15,7 @@ exports.linkedInCodeRequest = () =>{//arrow function so its scoped to get the ot
         scope:
         //line to trigger redeploy
         //another line lol
+        //another line syntax error
     })
     const linkedInAuth= 'https://www.linkedin.com/oauth/v2/authorization';
     
