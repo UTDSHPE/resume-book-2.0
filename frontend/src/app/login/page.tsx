@@ -11,8 +11,8 @@ import { FaLinkedin } from "react-icons/fa6";
 
 
 const handleCustomLogin = async () => {
-    const res = await fetch('/api/linkedin-token'); // Your API that calls Lambda or proxy
-    const { token } = await res.json(); // Custom Firebase token from backend
+    window.location.href ='https://yjsky4tmql.execute-api.us-east-1.amazonaws.com/auth/linkedin';
+    const token = '';
     const router = useRouter();
     try {
         await signInWithCustomToken(auth, token);
