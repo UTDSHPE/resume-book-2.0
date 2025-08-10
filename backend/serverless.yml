@@ -27,7 +27,7 @@ build:
 
 functions:
   students:
-    handler: src/functions/students/handler.main
+    handler: src/functions/students
     events:
       - http:
           path: students
@@ -46,14 +46,14 @@ functions:
           method: delete
 
   recruiters:
-    handler: src/functions/recruiters/handler.main
+    handler: src/functions/recruiters
     events:
       - http:
           path: recruiters/search
           method: post
 
   auth:
-    handler: src/functions/auth/handler.main
+    handler: src/functions/auth
     events:
       - http:
           path: auth/linkedin
