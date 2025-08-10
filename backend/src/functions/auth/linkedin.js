@@ -13,6 +13,7 @@ exports.linkedInCodeRequest = () =>{//arrow function so its scoped to get the ot
         client_id:process.env.LINKEDIN_CLIENT_ID,
         redirect_uri:'https://yjsky4tmql.execute-api.us-east-1.amazonaws.com/auth/linkedin/callback',
         scope:
+        //line to trigger redeploy
     })
     const linkedInAuth= 'https://www.linkedin.com/oauth/v2/authorization';
     
