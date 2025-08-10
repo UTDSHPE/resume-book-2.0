@@ -5,62 +5,46 @@ package:
   individually: true
   excludeDevDependencies: true
 
-plugins: 
-  - serverless-esbuild
-
 provider:
   name: aws
   runtime: nodejs22.x
   region: us-east-1
   stage: ${opt:stage, 'prod'}
-  environment: 
+  environment:
     FIREBASE_PROJECT_ID: ${env:FIREBASE_PROJECT_ID}
     FIREBASE_PRIVATE_KEY: ${env:FIREBASE_PRIVATE_KEY}
     LINKEDIN_CLIENT_ID: ${env:LINKEDIN_CLIENT_ID}
     LINKEDIN_CLIENT_SECRET: ${env:LINKEDIN_CLIENT_SECRET}
 
-custom:
+# v4 build config (replaces custom.esbuild)
+build:
   esbuild:
-    bundle: true        # bundle & tree-shake
+    bundle: true
     minify: false
     sourcemap: false
-    target: 'node22'    
+    # Treat these as external so they aren’t bundled
     external:
-      - aws-sdk         # exclude AWS SDK (Lambda provides it)
+      - aws-sdk
+    # Optionally exclude packages entirely from the zip
+    # v4 defaults to excluding @aws-sdk/* on node18 and up
 
 functions:
   students:
     handler: src/functions/students/handler.main
     events:
-      - http:
-          path: students
-          method: get
-      - http:
-          path: students
-          method: post
-      - http:
-          path: students/{id}
-          method: get
-      - http:
-          path: students/{id}
-          method: put
-      - http:
-          path: students/{id}
-          method: delete
+      - http: { path: students, method: get }
+      - http: { path: students, method: post }
+      - http: { path: students/{id}, method: get }
+      - http: { path: students/{id}, method: put }
+      - http: { path: students/{id}, method: delete }
 
   recruiters:
     handler: src/functions/recruiters/handler.main
     events:
-      - http:
-          path: recruiters/search
-          method: post
+      - http: { path: recruiters/search, method: post }
 
   auth:
     handler: src/functions/auth/handler.main
     events:
-      - http:
-          path: auth/linkedin
-          method: get
-      - http:
-          path: auth/linkedin/callback
-          method: get
+      - http: { path: auth/linkedin, method: get }
+      - http: { path: auth/linkedin/callback, method: get }

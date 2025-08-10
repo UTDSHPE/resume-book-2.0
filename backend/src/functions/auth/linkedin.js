@@ -14,6 +14,7 @@ exports.linkedInCodeRequest = () =>{//arrow function so its scoped to get the ot
         redirect_uri:'https://yjsky4tmql.execute-api.us-east-1.amazonaws.com/auth/linkedin/callback',
         scope:
         //line to trigger redeploy
+        //another line lol
     })
     const linkedInAuth= 'https://www.linkedin.com/oauth/v2/authorization';
     
