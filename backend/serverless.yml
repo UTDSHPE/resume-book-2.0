@@ -15,6 +15,7 @@ provider:
     FIREBASE_PRIVATE_KEY: ${env:FIREBASE_PRIVATE_KEY}
     LINKEDIN_CLIENT_ID: ${env:LINKEDIN_CLIENT_ID}
     LINKEDIN_CLIENT_SECRET: ${env:LINKEDIN_CLIENT_SECRET}
+    LINKEDIN_REDIRECT_URI: ${env:LINKEDIN_REDIRECT_URI}
 
 # Built-in esbuild in v4 (no serverless-esbuild plugin)
 build:
@@ -24,6 +25,7 @@ build:
     sourcemap: false
     external:
       - aws-sdk
+      - firebase-admin
 
 functions:
   students:

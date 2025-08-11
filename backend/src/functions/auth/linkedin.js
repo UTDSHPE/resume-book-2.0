@@ -1,5 +1,4 @@
 // src/functions/auth/linkedin.js
-const querystring = require('node:querystring');
 const admin = require('firebase-admin');
 const crypto = require('crypto');
 const axios = require('axios');
@@ -52,7 +51,7 @@ function clearCookie(name) {
 // ---------- 1) Redirect to LinkedIn (sets state cookie) ----------
 exports.linkedInRedirectURL = async () => {
     const state = generateState(); // random nonce
-    const params = querystring.stringify({
+    const params = new URLSearchParams({
         response_type: 'code',
         client_id: LINKEDIN_CLIENT_ID,
         redirect_uri: LINKEDIN_REDIRECT_URI,
