@@ -41,5 +41,6 @@ jobs:
           if [ -f backend/package.json ]; then
             cd backend
             npm ci
+            
             npm run lint || echo "No lint script or errors found"
           fi
