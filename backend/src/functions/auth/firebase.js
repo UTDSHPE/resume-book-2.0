@@ -14,6 +14,7 @@ if (!admin.apps.length) {
         }),
     });
 }
+//trigger redploy
 
 const auth = admin.auth();
 const db = admin.firestore();

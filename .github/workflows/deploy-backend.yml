@@ -63,5 +63,6 @@ jobs:
           FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
           LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
           LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+          LINKEDIN_CLIENT_URI: ${{secrets.LINKEDIN_REDIRECT_URI}}
 
         run: npx serverless deploy --stage ${{ steps.stage.outputs.stage }}
