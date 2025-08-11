@@ -28,6 +28,7 @@ build:
       - firebase-admin
 
 functions:
+  
   students:
     handler: src/functions/students/handler.main
     events:
@@ -55,7 +56,14 @@ functions:
           method: post
 
   auth:
+
     handler: src/functions/auth/handler.main
+    package:
+      patterns: 
+        - src/functions/auth/handler.js
+        - src/functions/auth/linkedin.js
+        - src/functions/auth/firebase
+        - src/shared/**
     events:
       - http:
           path: auth/linkedin
