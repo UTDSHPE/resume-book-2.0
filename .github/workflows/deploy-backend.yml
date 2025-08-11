@@ -19,6 +19,16 @@ jobs:
     runs-on: ubuntu-latest
     environment: Credentials
 
+    # Make secrets available to ALL steps (including `serverless package`)
+    env:
+      SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_DEPLOY_KEY }}
+      FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+      FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+      LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+      LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+      LINKEDIN_REDIRECT_URI: ${{ secrets.LINKEDIN_REDIRECT_URI }}
+      AWS_REGION: us-east-1
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -49,15 +59,9 @@ jobs:
         run: npm install -g serverless@latest
 
       - name: Authenticate to Serverless (non-interactive)
-        env:
-          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_DEPLOY_KEY }}
-        run: |
-          # Either login with token...
-          npx serverless login --token "$SERVERLESS_ACCESS_KEY"
-          # ...and also export for downstream commands just in case
-          echo "SERVERLESS_ACCESS_KEY=$SERVERLESS_ACCESS_KEY" >> $GITHUB_ENV
+        run: npx serverless login --token "$SERVERLESS_ACCESS_KEY"
 
-      # --- Hard sanity checks so we fail BEFORE deploy ---
+      # --- Sanity checks BEFORE deploy ---
       - name: Verify backend deps installed (axios present)
         working-directory: backend
         run: |
@@ -76,22 +80,15 @@ jobs:
           fi
           echo "Checking packaged zip for axios / follow-redirects / firebase-admin…"
           unzip -l "$AUTHZIP" | grep -Ei 'node_modules/(axios|follow-redirects|firebase-admin)' \
-            || (echo "Dependency missing from packaged auth zip. Check serverless.yml package.patterns for the auth function." && exit 1)
+            || (echo "Dependency missing from packaged auth zip. Check serverless.yml function-level package.patterns." && exit 1)
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy with Serverless
         working-directory: backend
-        env:
-          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_DEPLOY_KEY }}
-          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
-          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
-          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
-          LINKEDIN_REDIRECT_URI: ${{ secrets.LINKEDIN_REDIRECT_URI }}
         run: npx serverless deploy --stage ${{ steps.stage.outputs.stage }}
