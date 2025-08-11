@@ -20,7 +20,7 @@ provider:
 # Built-in esbuild in v4 (no serverless-esbuild plugin)
 build:
   esbuild:
-    bundle: true
+    bundle: false
     minify: false
     sourcemap: true
     external:
