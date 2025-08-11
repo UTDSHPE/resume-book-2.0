@@ -60,10 +60,12 @@ functions:
     handler: src/functions/auth/handler.main
     package:
       patterns: 
-        - src/functions/auth/handler.js
-        - src/functions/auth/linkedin.js
-        - src/functions/auth/firebase.js
+        - src/functions/auth/**
         - src/shared/**
+        - node_modules/**
+        - '!node_modules/aws-sdk/**'
+        - '!**/*.map'
+        - '!**/*.ts'
     events:
       - http:
           path: auth/linkedin
