@@ -80,9 +80,6 @@ async function getJson(url, accessToken) {
 }
 
 //  Redirect to LinkedIn (sets state cookie)
-// NOTE: Your handler currently expects a *URL string* (not a full response).
-// If so, use the STRING version below and set headers in the handler.
-// If you prefer this function to return the whole 302 response, keep as-is.
 exports.linkedInRedirectURL = () => {
     const state = generateState();
     const params = new URLSearchParams({

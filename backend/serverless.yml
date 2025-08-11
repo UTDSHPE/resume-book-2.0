@@ -30,7 +30,7 @@ build:
 functions:
   
   students:
-    handler: src/functions/students/handler.main
+    handler: src/functions/students/handler.hander
     events:
       - http:
           path: students
