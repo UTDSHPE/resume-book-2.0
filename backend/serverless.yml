@@ -62,7 +62,7 @@ functions:
       patterns: 
         - src/functions/auth/handler.js
         - src/functions/auth/linkedin.js
-        - src/functions/auth/firebase
+        - src/functions/auth/firebase.js
         - src/shared/**
     events:
       - http:
