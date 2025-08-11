@@ -9,7 +9,7 @@ const {
     LINKEDIN_REDIRECT_URI,
     FIREBASE_PRIVATE_KEY, // entire service account JSON string
 } = process.env;
-
+//
 //Firebase Admin (init once per cold start) 
 const serviceAccount = JSON.parse(FIREBASE_PRIVATE_KEY);
 if (!admin.apps.length) {

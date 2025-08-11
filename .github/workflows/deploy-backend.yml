@@ -3,7 +3,8 @@ name: Deploy Backend Lambdas
 on:
   push:
     branches: [main, develop]
-    paths: ['backend/**']
+    paths:
+      - 'backend/**'
   workflow_dispatch:
     inputs:
       stage:
@@ -19,6 +20,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: Credentials
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,16 +36,6 @@ jobs:
         working-directory: backend
         run: npm ci
 
-      - name: Install Serverless Framework
-        run: npm install -g serverless@latest
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
       - name: Determine deployment stage
         id: stage
         run: |
@@ -55,14 +47,48 @@ jobs:
             echo "stage=dev" >> $GITHUB_OUTPUT
           fi
 
+      - name: Install Serverless Framework
+        run: npm install -g serverless@latest
+
+      # --- Hard sanity checks so we fail BEFORE deploy ---
+      - name: Verify backend deps installed (axios present)
+        working-directory: backend
+        run: |
+          npm ls axios || (echo "axios NOT installed under backend/; check package.json & npm ci" && exit 1)
+          test -d node_modules/axios || (echo "node_modules/axios missing in backend/; packaging will fail" && exit 1)
+
+      - name: Package and assert axios is inside the auth artifact
+        working-directory: backend
+        run: |
+          npx serverless package --stage ${{ steps.stage.outputs.stage }}
+          echo "Checking packaged zip for axios / follow-redirects / firebase-admin…"
+          # List auth zip and grep for required modules (function-level patterns whitelist!)
+          AUTHZIP="$(ls .serverless/*auth*.zip | head -n 1 || true)"
+          if [ -z "$AUTHZIP" ]; then
+            echo "Could not find auth zip under .serverless/. Did packaging succeed?"
+            ls -la .serverless || true
+            exit 1
+          fi
+          unzip -l "$AUTHZIP" | grep -Ei 'node_modules/(axios|follow-redirects|firebase-admin)' || (
+            echo "Required dependency missing from packaged auth zip. Check serverless.yml package.patterns for the auth function."
+            echo "Auth ZIP: $AUTHZIP"
+            exit 1
+          )
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
       - name: Deploy with Serverless
         working-directory: backend
         env:
-          SERVERLESS_ACCESS_KEY: ${{secrets.SERVERLESS_DEPLOY_KEY}}
+          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_DEPLOY_KEY }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
           LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
           LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
-          LINKEDIN_REDIRECT_URI: ${{secrets.LINKEDIN_REDIRECT_URI}}
-
+          LINKEDIN_REDIRECT_URI: ${{ secrets.LINKEDIN_REDIRECT_URI }}
         run: npx serverless deploy --stage ${{ steps.stage.outputs.stage }}
