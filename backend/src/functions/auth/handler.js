@@ -7,10 +7,12 @@ exports.handler = async(event)=>{
     const{path,queryStringParameters} = event;
     try{
         if(path.endsWith('/auth/linkedin')){
-            const redirectUrl = linkedInRedirectURL();
+            const {redirectUrl,stateCookie} = linkedInRedirectURL();
             return{
                 statusCode:302,//302 is status code for redirection
-                headers:{Location:redirectUrl},
+                headers:{Location:redirectUrl,
+                    'Set-Cookie':stateCookie,
+                },
                 body:'',//not adding anything else
             };
         }

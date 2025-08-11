@@ -1,7 +1,6 @@
 // src/functions/auth/linkedin.js
 const admin = require('firebase-admin');
 const crypto = require('crypto');
-const axios = require('axios');
 
 const {
     LINKEDIN_CLIENT_SECRET,
@@ -10,7 +9,7 @@ const {
     FIREBASE_PRIVATE_KEY, // entire service account JSON string
 } = process.env;
 
-//Firebase Admin (init once per cold start) 
+// ----- Firebase Admin (init once per cold start) -----
 const serviceAccount = JSON.parse(FIREBASE_PRIVATE_KEY);
 if (!admin.apps.length) {
     admin.initializeApp({
@@ -22,22 +21,29 @@ if (!admin.apps.length) {
     });
 }
 const auth = admin.auth();
-const db = admin.firestore();//db connection
+const db = admin.firestore();
 
-// Helpers 
+// ----- Helpers -----
 function generateState() {
     return crypto.randomBytes(16).toString('hex');
 }
 function parseCookies(header = '') {
-    // works for both 'Cookie' and 'cookie'
     return Object.fromEntries(
-        header.split(';').map(v => v.trim()).filter(Boolean).map(kv => {
-            const idx = kv.indexOf('=');
-            return idx === -1 ? [kv, ''] : [kv.slice(0, idx), decodeURIComponent(kv.slice(idx + 1))];
-        })
+        header
+            .split(';')
+            .map(v => v.trim())
+            .filter(Boolean)
+            .map(kv => {
+                const idx = kv.indexOf('=');
+                return idx === -1 ? [kv, ''] : [kv.slice(0, idx), decodeURIComponent(kv.slice(1 + idx))];
+            })
     );
 }
-function setCookie(name, value, { maxAge = 600, path = '/', secure = true, httpOnly = true, sameSite = 'Lax' } = {}) {
+function setCookie(
+    name,
+    value,
+    { maxAge = 600, path = '/', secure = true, httpOnly = true, sameSite = 'Lax' } = {}
+) {
     const parts = [`${name}=${encodeURIComponent(value)}`, `Path=${path}`, `Max-Age=${maxAge}`];
     if (secure) parts.push('Secure');
     if (httpOnly) parts.push('HttpOnly');
@@ -48,9 +54,37 @@ function clearCookie(name) {
     return `${name}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
 }
 
-// ---------- 1) Redirect to LinkedIn (sets state cookie) ----------
-exports.linkedInRedirectURL = async () => {
-    const state = generateState(); // random nonce
+// fetch helpers
+async function postForm(url, params) {
+    const body = new URLSearchParams(params).toString();
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+    });
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`POST ${url} failed: ${res.status} ${text}`);
+    }
+    return res.json();
+}
+async function getJson(url, accessToken) {
+    const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`GET ${url} failed: ${res.status} ${text}`);
+    }
+    return res.json();
+}
+
+//  Redirect to LinkedIn (sets state cookie)
+// NOTE: Your handler currently expects a *URL string* (not a full response).
+// If so, use the STRING version below and set headers in the handler.
+// If you prefer this function to return the whole 302 response, keep as-is.
+exports.linkedInRedirectURL = () => {
+    const state = generateState();
     const params = new URLSearchParams({
         response_type: 'code',
         client_id: LINKEDIN_CLIENT_ID,
@@ -58,114 +92,111 @@ exports.linkedInRedirectURL = async () => {
         state,
         scope: 'r_liteprofile r_emailaddress',
     });
-
+    // Return ONLY the URL string (so it matches your handler’s usage)
+    // and let the handler set the Set-Cookie header.
     return {
-        statusCode: 302,
-        headers: {
-            Location: `https://www.linkedin.com/oauth/v2/authorization?${params}`,
-            // 10‑minute HttpOnly cookie storing the state, use it to verify users identity during login process
-            'Set-Cookie': setCookie('li_oauth_state', state, { maxAge: 600 }),
-        },
-        body: '',
+        url: `https://www.linkedin.com/oauth/v2/authorization?${params}`,
+        stateCookie: setCookie('li_oauth_state', state, { maxAge: 600 }),
     };
 };
 
-//  2) Callback: verify state from cookie, then finish login 
+//  Callback: verify state, exchange code, create token
 exports.handleLinkedInCallback = async (event) => {
-    // API Gateway v1/v2 both: prefer lower-case, fallback to capitalized
-    const headers = event.headers || {};
-    const cookieHeader = headers.cookie || headers.Cookie || '';
-    const cookies = parseCookies(cookieHeader);
-    const cookieState = cookies['li_oauth_state'] || null;
+    try {
+        const headers = event.headers || {};
+        const cookieHeader = headers.cookie || headers.Cookie || '';
+        const cookies = parseCookies(cookieHeader);
+        const cookieState = cookies['li_oauth_state'] || null;
 
-    const { code, state } = (event.queryStringParameters || {});
-    if (!code || !state || !cookieState || state !== cookieState) {
-        return { statusCode: 400, body: 'Invalid or missing state/code' };
-    }
+        const { code, state } = event.queryStringParameters || {};
+        if (!code || !state || !cookieState || state !== cookieState) {
+            return { statusCode: 400, body: 'Invalid or missing state/code' };
+        }
 
-    // one-time: clear cookie after user authenticates with linkedin
-    const clearStateCookie = clearCookie('li_oauth_state');
+        // clear the state cookie
+        const clearStateCookie = clearCookie('li_oauth_state');
 
-    // Exchange code for access token to their profile info
-    const tokenResp = await axios.post('https://www.linkedin.com/oauth/v2/accessToken', null, {
-        params: {
+        //  Exchange code for access token
+        const tokenData = await postForm('https://www.linkedin.com/oauth/v2/accessToken', {
             grant_type: 'authorization_code',
             code,
             client_id: LINKEDIN_CLIENT_ID,
             client_secret: LINKEDIN_CLIENT_SECRET,
-            redirect_uri: LINKEDIN_REDIRECT_URI, // must exactly match
-        },
-    });
-    const accessToken = tokenResp.data.access_token;
+            redirect_uri: LINKEDIN_REDIRECT_URI, // must match exactly
+        });
+        const accessToken = tokenData.access_token;
 
-    // 2) Fetch name & photo
-    const meResp = await axios.get(
-        'https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName,profilePicture(displayImage~:playableStreams))',
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-    const linkedinId = meResp.data.id;
-    const firstName = meResp.data.localizedFirstName || null;
-    const lastName = meResp.data.localizedLastName || null;
-    const photoElems = meResp.data.profilePicture?.['displayImage~']?.elements || [];
-    const profilePhoto = photoElems.length
-        ? photoElems[photoElems.length - 1]?.identifiers?.[0]?.identifier || null
-        : null;
+        // Fetch profile
+        const me = await getJson(
+            'https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName,profilePicture(displayImage~:playableStreams))',
+            accessToken
+        );
+        const linkedinId = me.id;
+        const firstName = me.localizedFirstName || null;
+        const lastName = me.localizedLastName || null;
+        const photoElems = me.profilePicture?.['displayImage~']?.elements || [];
+        const profilePhoto = photoElems.length
+            ? photoElems[photoElems.length - 1]?.identifiers?.[0]?.identifier || null
+            : null;
 
-    // 3) Fetch email
-    const emailResp = await axios.get(
-        'https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))',
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-    const email = emailResp.data.elements?.[0]?.['handle~']?.emailAddress || null;
+        // Fetch email
+        const emailObj = await getJson(
+            'https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))',
+            accessToken
+        );
+        const email = emailObj?.elements?.[0]?.['handle~']?.emailAddress || null;
 
-    // 4) (Optional) ensure an Auth user exists
-    try {
-        await auth.getUser(linkedinId);
-    } catch (e) {
-        if (e.code === 'auth/user-not-found') {
-            await auth.createUser({
-                uid: linkedinId,
-                email: email || undefined,
-                displayName: [firstName, lastName].filter(Boolean).join(' ') || undefined,
-                photoURL: profilePhoto || undefined,
-            });
-        } else {
-            throw e;
+        //  Ensure Firebase Auth user
+        try {
+            await auth.getUser(linkedinId);
+        } catch (e) {
+            if (e.code === 'auth/user-not-found') {
+                await auth.createUser({
+                    uid: linkedinId,
+                    email: email || undefined,
+                    displayName: [firstName, lastName].filter(Boolean).join(' ') || undefined,
+                    photoURL: profilePhoto || undefined,
+                });
+            } else {
+                throw e;
+            }
         }
-    }
 
-    // Insert Firestore student profile
-    await db.collection('students').doc(linkedinId).set(
-        {
-            uid: linkedinId,
-            firstName,
-            lastName,
-            email: email || null,
-            profilePhoto: profilePhoto || null,
+        // Insert Firestore profile
+        await db.collection('students').doc(linkedinId).set(
+            {
+                uid: linkedinId,
+                firstName,
+                lastName,
+                email: email || null,
+                profilePhoto: profilePhoto || null,
+                provider: 'linkedin',
+                linkedinId,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+        );
+
+        // Create Firebase custom token
+        const customToken = await auth.createCustomToken(linkedinId, {
             provider: 'linkedin',
-            linkedinId,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-    );
+            emailVerified: !!email,
+        });
 
-    // Create custom token using their linkedin id
-    const customToken = await auth.createCustomToken(linkedinId, {
-        provider: 'linkedin',
-        emailVerified: !!email,
-    });
-
-    // Return JSON (or redirect to your frontend and pass token in a fragment)
-    return {
-        statusCode: 200,
-        headers: {
-            'Content-Type': 'application/json',
-            'Set-Cookie': clearStateCookie, // clear it now that we used it
-        },
-        body: JSON.stringify({
-            customToken,
-            profile: { uid: linkedinId, firstName, lastName, email, profilePhoto },
-        }),
-    };
+        return {
+            statusCode: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Set-Cookie': clearStateCookie,
+            },
+            body: JSON.stringify({
+                customToken,
+                profile: { uid: linkedinId, firstName, lastName, email, profilePhoto },
+            }),
+        };
+    } catch (error) {
+        console.error(error);
+        return { statusCode: 500, body: 'Internal Server Error' };
+    }
 };
