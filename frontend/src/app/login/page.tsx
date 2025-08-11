@@ -11,7 +11,7 @@ import { FaLinkedin } from "react-icons/fa6";
 
 
 const handleCustomLogin = async () => {
-    window.location.href ='https://yjsky4tmql.execute-api.us-east-1.amazonaws.com/auth/linkedin';
+    window.location.href ='https://yjsky4tmql.execute-api.us-east-1.amazonaws.com/prod/auth/linkedin';
     const token = '';
     const router = useRouter();
     try {

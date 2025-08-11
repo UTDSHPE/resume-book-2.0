@@ -22,7 +22,7 @@ build:
   esbuild:
     bundle: true
     minify: false
-    sourcemap: false
+    sourcemap: true
     external:
       - aws-sdk
       - firebase-admin
@@ -60,6 +60,7 @@ functions:
       - http:
           path: auth/linkedin
           method: get
+          cors: true
       - http:
           path: auth/linkedin/callback
           method: get
