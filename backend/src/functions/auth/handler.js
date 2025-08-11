@@ -2,7 +2,6 @@
 just to separate logic and make it more digestible
 */
 const {buildAuthUrl,handleLinkedInCallback, linkedInRedirectURL} = require('./linkedin');
-//
 exports.handler = async(event)=>{
     const{path,queryStringParameters} = event;
     try{
