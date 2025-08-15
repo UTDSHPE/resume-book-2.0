@@ -1,33 +1,42 @@
-/*This file will internally route the requests for different stuff to the other files I've created
-just to separate logic and make it more digestible
+/*
+  Internal router for auth endpoints.
+  NOTE: This file now logs routing decisions and passes the FULL event to the callback,
+  so headers/cookies are available.
 */
-const {buildAuthUrl,handleLinkedInCallback, linkedInRedirectURL} = require('./linkedin');
-exports.handler = async(event)=>{
-    const{path,queryStringParameters} = event;
-    try{
-        if(path.endsWith('/auth/linkedin')){
-            const {redirectUrl,stateCookie} = linkedInRedirectURL();
-            return{
-                statusCode:302,//302 is status code for redirection
-                headers:{Location:redirectUrl,
-                    'Set-Cookie':stateCookie,
-                },
-                body:'',//not adding anything else
-            };
-        }
-        if(path.endsWith('/auth/linkedin/callback')){
-            const result = await handleLinkedInCallback(queryStringParameters||{});
-            return{
-                statusCode:200,
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify(result),
-            };
-        }
-        return{statusCode:404,body:'Not found'};//if it doesnt match any of our defined auth urls return 404
+const { linkedInRedirectURL, handleLinkedInCallback } = require('./linkedin');
 
-    }
-    catch(error){
-        console.error(err);
-        return{statusCode:500,body:'Internal Server Error'};
+exports.handler = async (event) => {
+    const { path, queryStringParameters, headers = {} } = event || {};
+    console.log('[HANDLER] Incoming request', { path, hasQs: !!queryStringParameters, hasCookies: !!(headers.cookie || headers.Cookie) });
+
+    try {
+        if (path && path.endsWith('/auth/linkedin')) {
+            console.log('[HANDLER] /auth/linkedin → building redirect URL');
+            const { url, stateCookie } = linkedInRedirectURL();
+            console.log('[HANDLER] Redirect URL ready. Setting state cookie.');
+            return {
+                statusCode: 302,
+                headers: {
+                    Location: url,
+                    'Set-Cookie': stateCookie,
+                    'Cache-Control': 'no-store',
+                },
+                body: '',
+            };
+        }
+
+        if (path && path.endsWith('/auth/linkedin/callback')) {
+            console.log('[HANDLER] /auth/linkedin/callback → delegating to callback handler');
+            // IMPORTANT: pass the full event so the callback can read headers & params
+            const resp = await handleLinkedInCallback({ headers, queryStringParameters });
+            console.log('[HANDLER] Callback responded', { status: resp?.statusCode });
+            return resp;
+        }
+
+        console.warn('[HANDLER] Route not found:', path);
+        return { statusCode: 404, body: 'Not found' };
+    } catch (error) {
+        console.error('[HANDLER] Unhandled error:', error);
+        return { statusCode: 500, body: 'Internal Server Error' };
     }
 };
