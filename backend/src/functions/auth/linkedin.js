@@ -84,7 +84,7 @@ async function getJson(url, accessToken) {
 }
 
 // ---------- 1) Build redirect URL & state cookie ----------
-exports.linkedInRedirectURL = () => {
+exports.linkedInRedirectURL = async (event) => {
     const state = generateState();
     const params = new URLSearchParams({
         response_type: 'code',
@@ -95,12 +95,23 @@ exports.linkedInRedirectURL = () => {
     });
 
     const url = `https://www.linkedin.com/oauth/v2/authorization?${params}`;
-    console.log('[LI] Redirecting to LinkedIn auth', { redirect_uri: LINKEDIN_REDIRECT_URI, state });
+
+    console.log('[LI] Redirecting to LinkedIn auth', {
+        redirect_uri: LINKEDIN_REDIRECT_URI,
+        state,
+    });
+
     return {
-        url,
-        stateCookie: setCookie('li_oauth_state', state, { maxAge: 600 }),
+        statusCode: 302,
+        headers: {
+            Location: url,
+            // Set state cookie for later verification
+            'Set-Cookie': `li_oauth_state=${state}; Path=/; HttpOnly; Secure; Max-Age=600; SameSite=Lax`,
+        },
+        body: '', // Required by API Gateway for redirects, can be empty
     };
 };
+
 
 // ---------- 2) Callback handler ----------
 exports.handleLinkedInCallback = async (event) => {
