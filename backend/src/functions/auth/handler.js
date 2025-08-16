@@ -5,7 +5,7 @@
 */
 const { linkedInRedirectURL, handleLinkedInCallback } = require('./linkedin');
 
-module.exports.main = async (event) => {
+exports.main = async (event) => {
     const { path, queryStringParameters, headers = {} } = event || {};
     console.log('[HANDLER] Incoming request', { path, hasQs: !!queryStringParameters, hasCookies: !!(headers.cookie || headers.Cookie) });
 
