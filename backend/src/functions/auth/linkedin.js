@@ -1,6 +1,7 @@
 const admin = require('firebase-admin');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken'); // decode the signed token linkedin gives
+const jwksClient = require('jwks-rsa');
 
 const {
     LINKEDIN_CLIENT_SECRET,
