@@ -57,7 +57,7 @@ functions:
           method: post
 
   auth:
-  handler: src/functions/auth/handler.handler
+  handler: src/functions/auth/handler.main
   package:
     patterns:
       - src/functions/auth/**
