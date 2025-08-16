@@ -56,7 +56,6 @@ functions:
           path: recruiters/search
           method: post
 
-functions:
   auth:
     handler: src/functions/auth/handler.main
     package:
