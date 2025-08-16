@@ -65,6 +65,8 @@ functions:
         - node_modules/axios/**          # <- include deps explicitly
         - node_modules/follow-redirects/**
         - node_modules/firebase-admin/**
+        - node_modules/sonwebtoken/**
+        - node_modules/jwks-rsa/**
     events:
       - http:
           path: auth/linkedin

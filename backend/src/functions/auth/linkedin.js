@@ -9,7 +9,7 @@ const {
     FIREBASE_PRIVATE_KEY,
     FRONTEND_REDIRECT_URL,
 } = process.env;
-
+//
 //for getting LinkedIn Public Key for verification
 const client = jwksClient({
     jwksUri: 'https://www.linkedin.com/oauth/openid/jwks',
