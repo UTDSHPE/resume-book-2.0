@@ -56,20 +56,17 @@ functions:
           path: recruiters/search
           method: post
 
-  auth:
-  handler: src/functions/auth/handler.main
-  package:
-    patterns:
-      - src/functions/auth/**
-      - src/shared/**
-      - node_modules/axios/**
-      - node_modules/follow-redirects/**
-      - node_modules/firebase-admin/**
-      - node_modules/firebase-admin/**/*
-      - node_modules/jsonwebtoken/**
-      - node_modules/jsonwebtoken/**/*
-      - node_modules/jwks-rsa/**
-      - node_modules/jwks-rsa/**/*
+auth:
+    handler: src/functions/auth/handler.main
+    package:
+      patterns:
+        - src/functions/auth/**
+        - src/shared/**
+        - node_modules/axios/**/*
+        - node_modules/follow-redirects/**/*
+        - node_modules/firebase-admin/**/*
+        - node_modules/jsonwebtoken/**/*
+        - node_modules/jwks-rsa/**/*
 
     events:
       - http:
