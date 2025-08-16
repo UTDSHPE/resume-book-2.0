@@ -10,17 +10,8 @@ import { MdMailOutline } from "react-icons/md";
 import { FaLinkedin } from "react-icons/fa6";
 
 
-const handleCustomLogin = async () => {
-    window.location.href ='https://yjsky4tmql.execute-api.us-east-1.amazonaws.com/prod/auth/linkedin';
-    const token = '';
-    const router = useRouter();
-    try {
-        await signInWithCustomToken(auth, token);
-        router.push('/dashboard');
-    } catch (err) {
-        console.error(err);
-        alert('Failed to sign in with custom token');
-    }
+const handleLinkedInLogin = async () => {
+    window.location.href = 'https://yjsky4tmql.execute-api.us-east-1.amazonaws.com/prod/auth/linkedin';
 };
 
 export default function LoginPage() {
@@ -77,7 +68,7 @@ export default function LoginPage() {
                     </button>
                     <button
                         type="button"
-                        onClick={handleCustomLogin}
+                        onClick={handleLinkedInLogin}
                         className="flex items-center gap-2 bg-white hover:bg-gray-100 text-black border border-gray-300 px-4 py-2 rounded-sm shadow-sm focus:outline-none focus:ring-2 mx-auto my-2"
                     >
                         <FaLinkedin size={20} className='text-[#0077B5]' />

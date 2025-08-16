@@ -111,7 +111,7 @@ exports.handleLinkedInCallback = async (event) => {
         const cookies = parseCookies(cookieHeader);
         const cookieState = cookies['li_oauth_state'] || null;
 
-        const { code, state, format } = event.queryStringParameters || {};
+        const { code, state } = event.queryStringParameters || {};
         console.log('[LI] Query received', { hasCode: !!code, hasState: !!state, hasCookieState: !!cookieState });
 
         if (!code || !state || !cookieState || state !== cookieState) {
@@ -121,6 +121,7 @@ exports.handleLinkedInCallback = async (event) => {
         const clearStateCookie = clearCookie('li_oauth_state');
         console.log('[LI] State OK. Exchanging code for token…');
 
+        // Exchange code for access token
         const tokenData = await postForm('https://www.linkedin.com/oauth/v2/accessToken', {
             grant_type: 'authorization_code',
             code,
@@ -131,7 +132,7 @@ exports.handleLinkedInCallback = async (event) => {
         const accessToken = tokenData.access_token;
         console.log('[LI] Token OK:', !!accessToken);
 
-        console.log('[LI] Fetching LinkedIn profile…');
+        // Fetch LinkedIn profile
         const me = await getJson(
             'https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName,profilePicture(displayImage~:playableStreams))',
             accessToken
@@ -143,37 +144,31 @@ exports.handleLinkedInCallback = async (event) => {
         const profilePhoto = photoElems.length
             ? photoElems[photoElems.length - 1]?.identifiers?.[0]?.identifier || null
             : null;
-        console.log('[LI] Profile OK:', { linkedinId, firstName, lastName, hasPhoto: !!profilePhoto });
 
-        console.log('[LI] Fetching email…');
+        // Fetch email
         const emailObj = await getJson(
             'https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))',
             accessToken
         );
         const email = emailObj?.elements?.[0]?.['handle~']?.emailAddress || null;
-        console.log('[LI] Email OK:', !!email);
 
-        console.log('[LI] Ensuring Firebase Auth user…');
+        // Ensure Firebase Auth user exists
         try {
             await auth.getUser(linkedinId);
-            console.log('[LI] Auth user exists:', linkedinId);
         } catch (e) {
             if (e.code === 'auth/user-not-found') {
-                console.log('[LI] Creating Auth user…');
                 await auth.createUser({
                     uid: linkedinId,
                     email: email || undefined,
                     displayName: [firstName, lastName].filter(Boolean).join(' ') || undefined,
                     photoURL: profilePhoto || undefined,
                 });
-                console.log('[LI] Auth user created:', linkedinId);
             } else {
-                console.error('[LI] getUser error:', e);
                 throw e;
             }
         }
 
-        console.log('[LI] Upserting Firestore profile…');
+        //Insert or update their firestore profile
         await db.collection('students').doc(linkedinId).set(
             {
                 uid: linkedinId,
@@ -188,38 +183,26 @@ exports.handleLinkedInCallback = async (event) => {
             },
             { merge: true }
         );
-        console.log('[LI] Firestore write OK');
 
-        console.log('[LI] Creating Firebase custom token…');
+        // Create Firebase custom token
         const customToken = await auth.createCustomToken(linkedinId, {
             provider: 'linkedin',
             emailVerified: !!email,
         });
-        console.log('[LI] Custom token created. Length:', customToken?.length);
 
-        // Debug JSON mode to avoid blank page while testing
-        if (format === 'json') {
-            console.log('[LI] Returning JSON (debug mode).');
-            return {
-                statusCode: 200,
-                headers: { 'Content-Type': 'application/json', 'Set-Cookie': clearStateCookie },
-                body: JSON.stringify({
-                    ok: true,
-                    customToken,
-                    profile: { uid: linkedinId, firstName, lastName, email, profilePhoto },
-                }),
-            };
-        }
+        console.log('[LI] Redirecting back to frontend with token…');
 
-        // Default: return JSON (you can switch to a 302 redirect to FRONTEND_REDIRECT_URL when ready)
+        // IMPORTANT: FRONTEND_REDIRECT_URL must be set in your env vars
+        const redirectUrl = `${FRONTEND_REDIRECT_URL}?token=${encodeURIComponent(customToken)}`;
+
         return {
-            statusCode: 200,
-            headers: { 'Content-Type': 'application/json', 'Set-Cookie': clearStateCookie },
-            body: JSON.stringify({
-                customToken,
-                profile: { uid: linkedinId, firstName, lastName, email, profilePhoto },
-            }),
+            statusCode: 302,
+            headers: {
+                'Location': redirectUrl,
+                'Set-Cookie': clearStateCookie
+            },
         };
+
     } catch (error) {
         console.error('[LI] Callback failed:', error);
         return { statusCode: 500, body: 'Internal Server Error' };
