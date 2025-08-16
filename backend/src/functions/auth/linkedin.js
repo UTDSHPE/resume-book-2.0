@@ -1,15 +1,35 @@
 const admin = require('firebase-admin');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken'); // decode the signed token linkedin gives
 
 const {
     LINKEDIN_CLIENT_SECRET,
     LINKEDIN_CLIENT_ID,
     LINKEDIN_REDIRECT_URI,
     FIREBASE_PRIVATE_KEY,
-    FRONTEND_REDIRECT_URL, // optional if you redirect later
+    FRONTEND_REDIRECT_URL,
 } = process.env;
 
-// Initialize Admin here (you can also import from shared/firebase if you prefer)
+//for getting LinkedIn Public Key for verification
+const client = jwksClient({
+    jwksUri: 'https://www.linkedin.com/oauth/openid/jwks',
+    cache: true,
+    cacheMaxEntries: 5,
+    cacheMaxAge: 10 * 60 * 1000, // 10 minutes
+});
+
+// Helper to get signing key
+function getKey(header, callback) {
+    client.getSigningKey(header.kid, (err, key) => {
+        if (err) {
+            callback(err);
+        } else {
+            const signingKey = key.getPublicKey();
+            callback(null, signingKey);
+        }
+    });
+}
+// ---------- Firebase Admin init ----------
 try {
     const svc = JSON.parse(FIREBASE_PRIVATE_KEY);
     if (!admin.apps.length) {
@@ -56,7 +76,7 @@ function clearCookie(name) {
     return `${name}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
 }
 
-// fetch helpers
+// fetch helper
 async function postForm(url, params) {
     const body = new URLSearchParams(params).toString();
     const res = await fetch(url, {
@@ -71,27 +91,16 @@ async function postForm(url, params) {
     }
     return res.json();
 }
-async function getJson(url, accessToken) {
-    const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (!res.ok) {
-        const text = await res.text();
-        console.error('[LI] getJson error', { url, status: res.status, text });
-        throw new Error(`GET ${url} failed: ${res.status} ${text}`);
-    }
-    return res.json();
-}
 
 // ---------- 1) Build redirect URL & state cookie ----------
-exports.linkedInRedirectURL = async (event) => {
+exports.linkedInRedirectURL = async () => {
     const state = generateState();
     const params = new URLSearchParams({
         response_type: 'code',
         client_id: LINKEDIN_CLIENT_ID,
         redirect_uri: LINKEDIN_REDIRECT_URI,
         state,
-        scope: 'r_liteprofile r_emailaddress',
+        scope: 'openid profile email', // <-- OIDC scopes only
     });
 
     const url = `https://www.linkedin.com/oauth/v2/authorization?${params}`;
@@ -106,13 +115,11 @@ exports.linkedInRedirectURL = async (event) => {
         headers: {
             Location: url,
             'Set-Cookie': `li_oauth_state=${state}; Path=/; HttpOnly; Secure; Max-Age=600; SameSite=Lax`,
-            'Content-Type': 'text/plain', // <- not JSON,otherwise it will hang and not redirect
+            'Content-Type': 'text/plain',
         },
-        body: '', // must be empty string
+        body: '',
     };
-
 };
-
 
 // ---------- 2) Callback handler ----------
 exports.handleLinkedInCallback = async (event) => {
@@ -133,7 +140,7 @@ exports.handleLinkedInCallback = async (event) => {
         const clearStateCookie = clearCookie('li_oauth_state');
         console.log('[LI] State OK. Exchanging code for token…');
 
-        // Exchange code for access token
+        // Exchange code for access & ID token
         const tokenData = await postForm('https://www.linkedin.com/oauth/v2/accessToken', {
             grant_type: 'authorization_code',
             code,
@@ -141,28 +148,25 @@ exports.handleLinkedInCallback = async (event) => {
             client_secret: LINKEDIN_CLIENT_SECRET,
             redirect_uri: LINKEDIN_REDIRECT_URI,
         });
-        const accessToken = tokenData.access_token;
-        console.log('[LI] Token OK:', !!accessToken);
 
-        // Fetch LinkedIn profile
-        const me = await getJson(
-            'https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName,profilePicture(displayImage~:playableStreams))',
-            accessToken
-        );
-        const linkedinId = me.id;
-        const firstName = me.localizedFirstName || null;
-        const lastName = me.localizedLastName || null;
-        const photoElems = me.profilePicture?.['displayImage~']?.elements || [];
-        const profilePhoto = photoElems.length
-            ? photoElems[photoElems.length - 1]?.identifiers?.[0]?.identifier || null
-            : null;
+        const { access_token, id_token } = tokenData;
+        console.log('[LI] Token OK:', { hasAccess: !!access_token, hasId: !!id_token });
 
-        // Fetch email
-        const emailObj = await getJson(
-            'https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))',
-            accessToken
-        );
-        const email = emailObj?.elements?.[0]?.['handle~']?.emailAddress || null;
+        if (!id_token) {
+            console.error('[LI] No id_token returned:', tokenData);
+            return { statusCode: 500, body: 'Missing id_token from LinkedIn' };
+        }
+
+        // Decode (and ideally verify) ID token
+        const decoded = jwt.decode(id_token);
+        // ⚠️ For production: verify signature using LinkedIn JWKS
+        const linkedinId = decoded.sub;
+        const email = decoded.email || null;
+        const firstName = decoded.given_name || null;
+        const lastName = decoded.family_name || null;
+        const fullName = decoded.name || [firstName, lastName].filter(Boolean).join(' ');
+
+        console.log('[LI] Decoded ID token', { linkedinId, email, fullName });
 
         // Ensure Firebase Auth user exists
         try {
@@ -172,22 +176,20 @@ exports.handleLinkedInCallback = async (event) => {
                 await auth.createUser({
                     uid: linkedinId,
                     email: email || undefined,
-                    displayName: [firstName, lastName].filter(Boolean).join(' ') || undefined,
-                    photoURL: profilePhoto || undefined,
+                    displayName: fullName || undefined,
                 });
             } else {
                 throw e;
             }
         }
 
-        //Insert or update their firestore profile
+        // Insert/update Firestore profile
         await db.collection('students').doc(linkedinId).set(
             {
                 uid: linkedinId,
                 firstName,
                 lastName,
-                email: email || null,
-                profilePhoto: profilePhoto || null,
+                email,
                 provider: 'linkedin',
                 linkedinId,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -204,17 +206,15 @@ exports.handleLinkedInCallback = async (event) => {
 
         console.log('[LI] Redirecting back to frontend with token…');
 
-        // IMPORTANT: FRONTEND_REDIRECT_URL must be set in your env vars
         const redirectUrl = `${FRONTEND_REDIRECT_URL}?token=${encodeURIComponent(customToken)}`;
 
         return {
             statusCode: 302,
             headers: {
                 'Location': redirectUrl,
-                'Set-Cookie': clearStateCookie
+                'Set-Cookie': clearStateCookie,
             },
         };
-
     } catch (error) {
         console.error('[LI] Callback failed:', error);
         return { statusCode: 500, body: 'Internal Server Error' };
