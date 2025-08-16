@@ -105,11 +105,12 @@ exports.linkedInRedirectURL = async (event) => {
         statusCode: 302,
         headers: {
             Location: url,
-            // Set state cookie for later verification
             'Set-Cookie': `li_oauth_state=${state}; Path=/; HttpOnly; Secure; Max-Age=600; SameSite=Lax`,
+            'Content-Type': 'text/plain', // <- not JSON,otherwise it will hang and not redirect
         },
-        body: '', // Required by API Gateway for redirects, can be empty
+        body: '', // must be empty string
     };
+
 };
 
 
