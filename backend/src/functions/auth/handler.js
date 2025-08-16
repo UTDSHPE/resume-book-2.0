@@ -12,18 +12,11 @@ exports.handler = async (event) => {
     try {
         if (path && path.endsWith('/auth/linkedin')) {
             console.log('[HANDLER] /auth/linkedin → building redirect URL');
-            const { url, stateCookie } = linkedInRedirectURL();
-            console.log('[HANDLER] Redirect URL ready. Setting state cookie.');
-            return {
-                statusCode: 302,
-                headers: {
-                    Location: url,
-                    'Set-Cookie': stateCookie,
-                    'Cache-Control': 'no-store',
-                },
-                body: '',
-            };
+            const resp = await linkedInRedirectURL(event); // now returns full Lambda response
+            console.log('[HANDLER] Redirect response ready');
+            return resp;
         }
+
 
         if (path && path.endsWith('/auth/linkedin/callback')) {
             console.log('[HANDLER] /auth/linkedin/callback → delegating to callback handler');
