@@ -4,7 +4,7 @@
   so headers/cookies are available.
 */
 //
-import { linkedInRedirectURL, handleLinkedInCallback } from './linkedin.mjs';
+import { linkedInRedirectURL, handleLinkedInCallback } from './linkedin.js';
 
 export const main = async (event) => {
     const { path, queryStringParameters, headers = {} } = event || {};
