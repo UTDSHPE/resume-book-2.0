@@ -1,4 +1,7 @@
-const admin = require('firebase-admin');
+// firebase.mjs
+import admin from 'firebase-admin';
+
+let auth, db;
 
 try {
     console.log('[FB] Parsing FIREBASE_PRIVATE_KEY JSON…');
@@ -19,63 +22,38 @@ try {
     } else {
         console.log('[FB] Reusing existing Firebase Admin app (warm start).');
     }
+    auth = admin.auth();
+    db = admin.firestore();
 } catch (e) {
     console.error('[FB] Failed to initialize Firebase Admin:', e);
     throw e;
 }
 
-const auth = admin.auth();
-const db = admin.firestore();
-console.log('[FB] Firestore + Auth ready.');
+export { admin, auth, db };
 
-async function createCustomToken(uid, claims = {}) {
-    console.log('[FB] createCustomToken for uid:', uid);
+export async function createCustomToken(uid, claims = {}) {
     return auth.createCustomToken(uid, claims);
 }
 
-async function ensureAuthUser(uid, { email, displayName, photoURL } = {}) {
-    console.log('[FB] ensureAuthUser for uid:', uid);
+export async function ensureAuthUser(uid, { email, displayName, photoURL } = {}) {
     try {
         await auth.getUser(uid);
-        console.log('[FB] Auth user exists:', uid);
     } catch (err) {
         if (err.code === 'auth/user-not-found') {
-            console.log('[FB] Creating Auth user:', { uid, email, displayName, photoURL });
             await auth.createUser({ uid, email, displayName, photoURL });
-        } else {
-            console.error('[FB] getUser failed:', err);
-            throw err;
-        }
+        } else throw err;
     }
 }
 
-async function upsertProfile(collection, uid, data) {
-    console.log('[FB] upsertProfile', { collection, uid });
+export async function upsertProfile(collection, uid, data) {
     const docRef = db.collection(collection).doc(uid);
     await docRef.set(
-        {
-            ...data,
-            uid,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
+        { ...data, uid, updatedAt: admin.firestore.FieldValue.serverTimestamp() },
         { merge: true }
     );
-    console.log('[FB] upsertProfile OK:', { collection, uid });
 }
 
-async function getProfile(collection, uid) {
-    console.log('[FB] getProfile', { collection, uid });
+export async function getProfile(collection, uid) {
     const snap = await db.collection(collection).doc(uid).get();
     return snap.exists ? snap.data() : null;
 }
-
-module.exports = {
-    admin,
-    auth,
-    db,
-    createCustomToken,
-    ensureAuthUser,
-    upsertProfile,
-    getProfile,
-};

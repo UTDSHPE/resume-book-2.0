@@ -1,7 +1,8 @@
-const admin = require('firebase-admin');
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken'); // decode the signed token linkedin gives
-const jwksClient = require('jwks-rsa');
+import admin from 'firebase-admin';
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import jwksClient from 'jwks-rsa';
+import { auth, db, createCustomToken, ensureAuthUser, upsertProfile } from './firebase.mjs';
 
 const {
     LINKEDIN_CLIENT_SECRET,
@@ -104,7 +105,7 @@ async function postForm(url, params) {
 }
 
 // ---------- 1) Build redirect URL & state cookie ----------
-exports.linkedInRedirectURL = async () => {
+export const linkedInRedirectURL = async () => {
     const state = generateState();
     const params = new URLSearchParams({
         response_type: 'code',
@@ -133,7 +134,7 @@ exports.linkedInRedirectURL = async () => {
 };
 
 // ---------- 2) Callback handler ----------
-exports.handleLinkedInCallback = async (event) => {
+export const handleLinkedInCallback = async (event) => {
     console.log('[LI] Callback hit.');
     try {
         const headers = event.headers || {};
