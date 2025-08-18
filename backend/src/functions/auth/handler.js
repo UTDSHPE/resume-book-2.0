@@ -4,9 +4,9 @@
   so headers/cookies are available.
 */
 //
-const { linkedInRedirectURL, handleLinkedInCallback } = require('./linkedin');
+import { linkedInRedirectURL, handleLinkedInCallback } from './linkedin.mjs';
 
-exports.main = async (event) => {
+export const main = async (event) => {
     const { path, queryStringParameters, headers = {} } = event || {};
     console.log('[HANDLER] Incoming request', { path, hasQs: !!queryStringParameters, hasCookies: !!(headers.cookie || headers.Cookie) });
 
