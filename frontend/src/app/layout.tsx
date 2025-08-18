@@ -1,5 +1,8 @@
 import "./globals.css";
 import { DM_Sans } from 'next/font/google'
+import { Inter } from 'next/font/google'
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -18,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${dmSans.variable} font-sans antialiased`}>
+    <html lang="en" date-theme="light" className={inter.variable}>
+      <body className='font-sans'>
         <main>{children}</main>
       </body>
     </html>

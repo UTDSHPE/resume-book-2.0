@@ -1,5 +1,8 @@
+/* Tailwind v4 only needs one import */
 @import "tailwindcss";
+@plugin "daisyui";
 
+/* Optional: define custom CSS variables */
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -16,6 +19,7 @@
   }
 }
 
+/* Base body styles */
 body {
   background: var(--color-background);
   color: var(--color-foreground);

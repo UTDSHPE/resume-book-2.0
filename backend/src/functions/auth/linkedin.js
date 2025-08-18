@@ -126,7 +126,7 @@ export const handleLinkedInCallback = async (event) => {
         });
 
         // Upsert Firestore profile
-        await upsertProfile('students', linkedinId, {
+        await upsertProfile('users', linkedinId, {
             firstName,
             lastName,
             email,
