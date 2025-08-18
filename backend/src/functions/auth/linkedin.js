@@ -8,7 +8,7 @@ const {
     LINKEDIN_CLIENT_ID,
     LINKEDIN_REDIRECT_URI,
     FIREBASE_PRIVATE_KEY,
-    FRONTEND_REDIRECT_URL,
+    FRONTEND_REDIRECT_URI,
 } = process.env;
 //bleh
 //for getting LinkedIn Public Key for verification
@@ -22,15 +22,25 @@ const client = jwksClient({
 // Helper to get signing key
 function getKey(header, callback) {
     client.getSigningKey(header.kid, (err, key) => {
-        if (err) {
-            callback(err);
-        } else {
-            const signingKey = key.getPublicKey();
-            callback(null, signingKey);
-        }
+        if (err) return callback(err);
+        callback(null, key.getPublicKey());
     });
 }
-// ---------- Firebase Admin init ----------
+
+const verified = await new Promise((resolve, reject) => {
+    jwt.verify(
+        id_token,
+        getKey,
+        {
+            algorithms: ['RS256'],
+            issuer: 'https://www.linkedin.com',   // LinkedIn OIDC issuer
+            audience: LINKEDIN_CLIENT_ID,         // app’s client_id
+        },
+        (err, payload) => (err ? reject(err) : resolve(payload))
+    );
+});//verify token is from linkedin using the public key
+
+//  Firebase Admin init
 try {
     const svc = JSON.parse(FIREBASE_PRIVATE_KEY);
     if (!admin.apps.length) {
@@ -158,9 +168,9 @@ exports.handleLinkedInCallback = async (event) => {
             return { statusCode: 500, body: 'Missing id_token from LinkedIn' };
         }
 
-        // Decode (and ideally verify) ID token
+        // Decode and verify ID token
         const decoded = jwt.decode(id_token);
-        // ⚠️ For production: verify signature using LinkedIn JWKS
+        // For production: verify signature using LinkedIn JWKS
         const linkedinId = decoded.sub;
         const email = decoded.email || null;
         const firstName = decoded.given_name || null;
@@ -207,7 +217,7 @@ exports.handleLinkedInCallback = async (event) => {
 
         console.log('[LI] Redirecting back to frontend with token…');
 
-        const redirectUrl = `${FRONTEND_REDIRECT_URL}?token=${encodeURIComponent(customToken)}`;
+        const redirectUrl = `${FRONTEND_REDIRECT_URI}?token=${encodeURIComponent(customToken)}`;
 
         return {
             statusCode: 302,
