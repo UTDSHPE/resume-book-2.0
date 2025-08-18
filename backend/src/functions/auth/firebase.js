@@ -3,6 +3,7 @@ import admin from 'firebase-admin';
 
 let auth, db;
 
+// Initialize Firebase Admin once per cold start
 try {
     console.log('[FB] Parsing FIREBASE_PRIVATE_KEY JSON…');
     const serviceAccount = JSON.parse(process.env.FIREBASE_PRIVATE_KEY);
@@ -22,6 +23,7 @@ try {
     } else {
         console.log('[FB] Reusing existing Firebase Admin app (warm start).');
     }
+
     auth = admin.auth();
     db = admin.firestore();
 } catch (e) {
@@ -31,6 +33,7 @@ try {
 
 export { admin, auth, db };
 
+// ---------- helpers ----------
 export async function createCustomToken(uid, claims = {}) {
     return auth.createCustomToken(uid, claims);
 }
@@ -41,7 +44,9 @@ export async function ensureAuthUser(uid, { email, displayName, photoURL } = {})
     } catch (err) {
         if (err.code === 'auth/user-not-found') {
             await auth.createUser({ uid, email, displayName, photoURL });
-        } else throw err;
+        } else {
+            throw err;
+        }
     }
 }
 
@@ -54,6 +59,6 @@ export async function upsertProfile(collection, uid, data) {
 }
 
 export async function getProfile(collection, uid) {
-    const snap = await db.collection(collection).doc(uid).get();
+    const snap = await db.collection(collection).doc(uid);
     return snap.exists ? snap.data() : null;
 }
