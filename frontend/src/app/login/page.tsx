@@ -14,6 +14,7 @@ const handleLinkedInLogin = async () => {
     window.location.href = 'https://yjsky4tmql.execute-api.us-east-1.amazonaws.com/prod/auth/linkedin';
 };
 
+
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');

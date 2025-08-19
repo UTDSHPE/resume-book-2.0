@@ -7,24 +7,24 @@ export default function HomeNavbar() {
             <div className="flex items-center justify-between">
 
                 {/* Logo and Title */}
-                <div className="flex flex-row gap-x-4  items-center z-10 bg-primary/60 backdrop-blur-md py-2 px-4 rounded-2xl">
+                <div className="flex flex-row gap-x-4  items-center z-10 bg-transparent backdrop-blur-xl py-2 px-4 rounded-2xl">
                     <Link href='/' >
                         <SiGitbook size={40} className='text-white z-20'/>
                     </Link>
                     <Link href='/about'>
-                        <button className='btn btn-dash btn-ghost z-10 hover:bg-transparent hover:border-white '>About</button>
+                        <button className='btn btn-dash text-sm md:text-base btn-ghost z-10 hover:bg-transparent hover:border-white text-white'>About</button>
                     </Link>
                     <Link href='/contact'>
-                        <button className='btn btn-dash btn-ghost z-10 hover:bg-transparent hover:border-white '>Contact</button>
+                        <button className='btn btn-dash text-sm md:text-base btn-ghost z-10 hover:bg-transparent hover:border-white text-white'>Contact</button>
                     </Link>
                 </div>
 
-                <div className='flex flex-row gap-x-2  items-center z-10 bg-primary/60 backdrop-blur-md py-2 px-2 rounded-2xl'>
+                <div className='flex flex-row gap-x-2 items-center z-10 bg-transparent backdrop-blur-xl py-2 px-2 rounded-2xl'>
                     <Link href='/login'>
-                        <button className='btn btn-dash btn-ghost z-10 hover:bg-transparent hover:border-white y'>Login</button>
+                        <button className='btn btn-dash text-sm md:text-base btn-ghost z-10 hover:bg-transparent hover:border-white text-white'>Login</button>
                     </Link>
                     <Link href='/signup'>
-                        <button className='btn btn-dash btn-ghost z-10 hover:bg-transparent hover:border-white text-white'>Signup</button>
+                        <button className='btn btn-dash text-sm md:text-base btn-ghost z-10 hover:bg-transparent hover:border-white text-white'>Signup</button>
                     </Link>
                 </div>
 
