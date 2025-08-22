@@ -1,53 +1,101 @@
-import React from 'react';
-import {useState} from 'react';
+import React, { useEffect, useState } from "react";
+
+/* =========================
+   Single checkbox
+   ========================= */
 
 interface CheckBoxProps {
     title: string;
-    checked: boolean;                          // parent controls this
-    onChange: (checked: boolean) => void;      // parent gets updates
-}
-interface CheckBoxListProps{
-    title?:string;
-    names:string[];
-    onChange?:(selected:string[])=>void;//means function that takes a string array and returns nothing,as we are just modifying the state variables
+    // Controlled:
+    checked?: boolean;
+    onChange?: (checked: boolean) => void;
+    // Uncontrolled:
+    defaultChecked?: boolean;
 }
 
-export const CheckBox = ({ title, checked, onChange }: CheckBoxProps) => {
+export const CheckBox: React.FC<CheckBoxProps> = ({
+    title,
+    checked,
+    onChange,
+    defaultChecked = false,
+}) => {
+    const isControlled = checked !== undefined;
+    const [local, setLocal] = useState<boolean>(defaultChecked);
+    // if defaultChecked changes later (rare), keep local in sync
+    useEffect(() => { if (!isControlled) setLocal(defaultChecked); }, [defaultChecked, isControlled]);
+
+    const isChecked = isControlled ? !!checked : local;
+
+    const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const next = e.target.checked;
+        if (isControlled) onChange?.(next);
+        else { setLocal(next); onChange?.(next); }
+    };
+
     return (
         <div className="text-xs flex flex-col items-start">
-            {/* Title above */}
-            <span className="label-text text-black font-medium mb-1">{title}</span>
-
-            {/* Checkbox only */}
-            <input
-                type="checkbox"
-                className="checkbox"
-                checked={checked}
-                onChange={(e) => onChange(e.target.checked)}
-            />
+            <span className="label-text text-black font-medium mb-2">{title}</span>
+            <input type="checkbox" className="checkbox" checked={isChecked} onChange={handle} />
         </div>
     );
 };
 
-export const CheckBoxList = ({ title,names, onChange }: CheckBoxListProps) => {
-    const [selected, setSelected] = useState<string[]>([]);
+/* =========================
+   Checkbox list (multi-select)
+   ========================= */
+
+interface CheckBoxListProps {
+    title?: string;
+    names: string[];
+    // Controlled:
+    value?: string[];
+    onChange?: (selected: string[]) => void;
+    // Uncontrolled:
+    defaultValue?: string[];
+}
+
+export const CheckBoxList: React.FC<CheckBoxListProps> = ({
+    title,
+    names,
+    value,
+    onChange,
+    defaultValue = [],
+}) => {
+    const isControlled = value !== undefined;
+    const [local, setLocal] = useState<string[]>(defaultValue);
+
+    // keep local in sync if defaultValue changes and we're uncontrolled
+    useEffect(() => { if (!isControlled) setLocal(defaultValue); }, [defaultValue, isControlled]);
+
+    const selected = isControlled ? (value as string[]) : local;
 
     const toggle = (name: string) => {
-        setSelected((prev) => {//prev calls the function and gives the previous state of the variable as prev
-            const isSelected = prev.includes(name);//checks if the string is present in previous state array, which means its selected
-            const updated = isSelected ? prev.filter((n) => n !== name) // if it is present and its checked, remove it from state via filter
-            : [...prev, name];//adds it by creating a new array w all the elements of prev + name
-            onChange?.(updated); //call onChange function if it exists via optional chanining to refresh state array
-            return updated;//return state array to internal state variable
-            //onChange is the string arr we pass from frontend and the return is so we can keep track internally in the function
-        });
+        // compute the next selection from the current source of truth
+        const next = selected.includes(name)
+            ? selected.filter((n) => n !== name)
+            : [...selected, name];
+
+        if (isControlled) {
+            onChange?.(next);
+        } else {
+            // use functional update to avoid stale state, and emit the fresh array
+            setLocal((prev) => {
+                const updated = prev.includes(name)
+                    ? prev.filter((n) => n !== name)
+                    : [...prev, name];
+                onChange?.(updated);
+                return updated;
+            });
+        }
     };
 
     return (
         <div className="flex flex-col gap-2">
-            <label className="flex label cursor-pointer mb-2">
-                <span className="label-text text-xs text-black font-medium">{title}</span>
-            </label>
+            {title && (
+                <label className="flex label cursor-pointer mb-2">
+                    <span className="label-text text-xs text-black font-medium">{title}</span>
+                </label>
+            )}
             {names.map((name) => (
                 <label key={name} className="label cursor-pointer">
                     <input
