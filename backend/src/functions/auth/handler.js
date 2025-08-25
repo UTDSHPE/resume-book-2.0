@@ -19,7 +19,6 @@ export const main = async (event) => {
             return resp;
         }
 
-
         if (path && path.endsWith('/auth/linkedin/callback')) {
             console.log('[HANDLER] /auth/linkedin/callback → delegating to callback handler');
             // IMPORTANT: pass the full event so the callback can read headers & params

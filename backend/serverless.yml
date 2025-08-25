@@ -32,7 +32,7 @@ functions:
 
   invites:
   handler: src/functions/student/handler.main
-    package: 
+  package: 
       patterns:
         - src/functions/student/**
         - node_modules/**
