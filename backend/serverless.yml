@@ -30,31 +30,25 @@ build:
 
 functions:
   
-  students:
-    handler: src/functions/students/handler.hander
-    events:
-      - http:
-          path: students
-          method: get
-      - http:
-          path: students
-          method: post
-      - http:
-          path: students/{id}
-          method: get
-      - http:
-          path: students/{id}
-          method: put
-      - http:
-          path: students/{id}
-          method: delete
+ 
 
-  recruiters:
-    handler: src/functions/recruiters/handler.main
-    events:
-      - http:
-          path: recruiters/search
-          method: post
+  admin:
+    handler: src/functions/admin/handler.main
+    package: 
+      patterns:
+        - src/functions/admin/**
+        - src/shared/**
+        - node_modules/**
+      events:
+        - http:
+            path: admin/createinvite
+            method: get
+            cors: true
+        - http:
+            path: admin/createinvite
+            method: get
+            cors: true
+
 
   auth:
     handler: src/functions/auth/handler.main

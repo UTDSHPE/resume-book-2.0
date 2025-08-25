@@ -5,6 +5,7 @@
 */
 //
 import { linkedInRedirectURL, handleLinkedInCallback } from './linkedin.js';
+import admin from 'firebase-admin';
 
 export const main = async (event) => {
     const { path, queryStringParameters, headers = {} } = event || {};

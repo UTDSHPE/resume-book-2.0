@@ -64,8 +64,8 @@ async function postForm(url, params) {
 
 // ---------- 1) Redirect ----------
 export const linkedInRedirectURL = async () => {
-    const state = generateState();
-    const params = new URLSearchParams({
+    const state = generateState();//generate state prior to request so we ensure the request info goes back to same user
+    const params = new URLSearchParams({//will automatically insert necessary chars to make these valid params for request
         response_type: 'code',
         client_id: LINKEDIN_CLIENT_ID,
         redirect_uri: LINKEDIN_REDIRECT_URI,
@@ -80,7 +80,7 @@ export const linkedInRedirectURL = async () => {
         statusCode: 302,
         headers: {
             Location: url,
-            'Set-Cookie': `li_oauth_state=${state}; Path=/; HttpOnly; Secure; Max-Age=600; SameSite=Lax`,
+            'Set-Cookie': `li_oauth_state=${state}; Path=/; HttpOnly; Secure; Max-Age=600; SameSite=Lax`,//valid for 10 minutes
         },
         body: '',
     };
