@@ -31,8 +31,8 @@ build:
 functions:
 
   invites:
-  handler: src/functions/student/handler.main
-  package: 
+    handler: src/functions/student/handler.main
+    package: 
       patterns:
         - src/functions/student/**
         - node_modules/**
