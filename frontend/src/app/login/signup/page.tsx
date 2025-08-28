@@ -11,6 +11,7 @@ import { FaLinkedin } from "react-icons/fa6";
 export default function signUpPage(){
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
     const handleLinkedInSignup= async () => {
@@ -22,6 +23,7 @@ export default function signUpPage(){
         e.preventDefault();
         try {
             await createUserWithEmailAndPassword(auth, email, password);
+            if(auth.currentUser)
             router.push('/dashboard');
         } catch (err: any) {
             alert(err.message);
@@ -30,6 +32,8 @@ export default function signUpPage(){
 
 
     const handleGoogleSignUp = async () => {
+        if(loading) return;
+        setLoading(true);
         try {
             const provider = new GoogleAuthProvider();
             await signInWithPopup(auth, provider);

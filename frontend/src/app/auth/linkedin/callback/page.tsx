@@ -33,5 +33,10 @@ export default function callback() {
         run();
     }, [router]);
 
-    return <div>Signing you in with LinkedIn…</div>;
+    return <div>
+        <div className="bg-white flex items-center  min-h-screen w-full">
+            <p>Loggin in with LinkedIn...</p>
+            <span className="loading loading-spinner mx-auto loading-xl text-primary"></span>
+        </div>
+    </div>;
 }

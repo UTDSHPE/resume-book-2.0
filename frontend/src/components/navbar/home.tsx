@@ -23,7 +23,7 @@ export default function HomeNavbar() {
                     <Link href='/login'>
                         <button className='btn btn-dash text-sm md:text-base btn-ghost z-10 hover:bg-transparent hover:border-white text-white'>Login</button>
                     </Link>
-                    <Link href='/signup'>
+                    <Link href='/login/signup'>
                         <button className='btn btn-dash text-sm md:text-base btn-ghost z-10 hover:bg-transparent hover:border-white text-white'>Signup</button>
                     </Link>
                 </div>

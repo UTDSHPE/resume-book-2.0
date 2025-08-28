@@ -1,7 +1,7 @@
 import "./globals.css";
 import { DM_Sans } from 'next/font/google'
 import { Inter } from 'next/font/google'
-
+import { AuthProvider } from "./context/AuthContext";
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 const dmSans = DM_Sans({
@@ -23,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="light" className={inter.variable}>
       <body className='font-sans'>
+        <AuthProvider>
         <main>{children}</main>
+        </AuthProvider>
       </body>
     </html>
   );

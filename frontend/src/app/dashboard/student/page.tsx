@@ -11,7 +11,9 @@ import { CheckBox, CheckBoxList } from "@/components/filterComponents/CheckBox";
 import { FileUpload } from "@/components/upload/FileUpload";
 import { useProfileForm, Availability, GradSemester } from "@/app/hooks/useProfileForm";
 
-import {SocialURLs,LinkInput} from '@/components/filterComponents/LinkInput'
+import {useAuth} from '@/app/context/AuthContext';
+
+import {LinkInput} from '@/components/filterComponents/LinkInput'
 export default function UserDashboard() {
   const { form, update, bind /* bindInput, bindNumber, bindCheckbox */ } = useProfileForm();
 

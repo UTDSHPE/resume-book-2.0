@@ -1,8 +1,5 @@
+import  RoleRedirect  from "@/components/RoleRedirect";
 
-export default function DashBoard() {
-    return(
-        <div>
-
-        </div>
-    );
+export default function DashBoardEntry() {
+    return <RoleRedirect/>;
 }

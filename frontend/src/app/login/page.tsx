@@ -10,15 +10,15 @@ import { MdMailOutline } from "react-icons/md";
 import { FaLinkedin } from "react-icons/fa6";
 
 
-const handleLinkedInLogin = async () => {
-    window.location.href = 'https://yjsky4tmql.execute-api.us-east-1.amazonaws.com/prod/auth/linkedin';
-};
-
-
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading,setLoading] = useState(false);
     const router = useRouter();
+
+    const handleLinkedInLogin = async () => {
+        window.location.href = 'https://yjsky4tmql.execute-api.us-east-1.amazonaws.com/prod/auth/linkedin';
+    };
 
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();
