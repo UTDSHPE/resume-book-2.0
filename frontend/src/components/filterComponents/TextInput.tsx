@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import { LuRefreshCw } from "react-icons/lu";
+import { LuRefreshCw, LuCopy } from "react-icons/lu";
 import axios from 'axios';
 import { useAuth } from "@/app/context/AuthContext";
-
-const { user } = useAuth();
+import { GenerateCode } from "../Code";
 
 interface NameInputProps {
     label: string;
@@ -15,6 +14,10 @@ interface codeInputProps{
     subtext:string;
     onChange:(value:string)=>void;
     required?:boolean;
+}
+interface CodeGenerateProps{
+    label:string,
+    subtext:string;
 }
 
 export const NameInput = ({ label, required }: NameInputProps) => {
@@ -78,61 +81,91 @@ export const NameInput = ({ label, required }: NameInputProps) => {
     );
 };
 
-interface handleGenerateProps{
-    
-}
 
-async function handleGenerate(){
-    
-    const invokeURL = process.env.NEXT_PUBLIC_API_GATEWAY_INVOKE_URL + "admin/create-invite";
-    const idToken = user?.getIdToken();
-    const role = idToken.claims.role;//custom claims are attached to a token, in this case our custom claim for role is grabbed from the token
 
-    const response = await axios.post(
-        invokeURL,
-        {
-            uid:user,
-            role:role,
-        },
-        {headers:{Authorization:`Bearer ${idToken}`}}
-    )
-    return;
-}
-const generateCodeButton = ()=>{
+const GenerateCodeButton = () => {
+    const { user } = useAuth(); 
+    const [loading, setLoading] = useState(false);
+    const [code,setCode] = useState("");
+    const [isCopied,setIsCopied] =useState(false);
 
-    const [loading,setLoading] = useState(false);
-    const handleClick = async()=>{
-        try{
+    const handleGenerate = async () => {
+        if (!user) throw new Error("No user signed in");
+
+        const tokenResult = await user.getIdTokenResult();//Get values from token
+        const idToken = tokenResult.token;                 // the actual JWT string
+        const role = tokenResult.claims.role;              // your custom claim
+
+        const invokeURL =
+            process.env.NEXT_PUBLIC_API_GATEWAY_INVOKE_URL + "admin/create-invite";
+
+        const response = await axios.post(
+            invokeURL,
+            { uid: user.uid, role },
+            { headers: { Authorization: `Bearer ${idToken}` } }
+        );
+
+        return response.data;
+    };
+
+    const handleClick = async () => {
+        try {
             setLoading(true);
             const data = await handleGenerate();
-        }
-        catch (err){
-            console.error("Error generating invite");
-        }
-        finally{
+            console.log("Invite created:", data);
+
+            setCode(data.code); // Save the generated code into state
+        } catch (err) {
+            console.error("Error generating invite", err);
+        } finally {
             setLoading(false);
         }
-    }
-    return(
-    <div>
+    };
 
-        <button className="btn btn-square"
-        onClick={handleClick} disabled={loading}
-        >
-        
-        {loading?//whenever the click it it'll start loading
-        <span className="loading loading-spinner"></span>:
-        <span className=""><LuRefreshCw></LuRefreshCw></span>}
-        </button>
-    </div>
 
+    const handleCopyClick = async (textCopied:string)=>{
+        try {
+            await navigator.clipboard.writeText(textCopied);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000); // Reset "Copied!" message after 2 seconds
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            // Optionally, provide user feedback for failure
+        }
+    };
+
+    return (
+        <div className="flex flex-row">
+            <button
+                className="btn btn-square"
+                onClick={handleClick}
+                disabled={loading}
+            >
+                {loading ? (
+                    <span className="loading loading-spinner"></span>
+                ) : (
+                    <LuRefreshCw />
+                )}
+            </button>
+            <fieldset>
+                {code}
+            </fieldset>
+            <button
+                className="btn btn-square"
+                onClick={() => handleCopyClick(code)} // arrow functions call only on click
+            >
+                <LuCopy />
+            </button>
+
+        </div >
     );
-}
+};
+
 
 export const CodeInput = ({label,required,buttonLabel,subtext,onChange}:codeInputProps) =>{
     const [code,setCode] = useState('');//init as empty
     const [error, setError] = React.useState<string | null>(null);
-    const regex = /^[a-f0-9']+$/;
+    const regex = /^[a-f0-9]+$/;
 
     return(
         <>
@@ -203,6 +236,27 @@ export const CodeInput = ({label,required,buttonLabel,subtext,onChange}:codeInpu
                 </div>
             </div>
 
+        </>
+    );
+}
+
+
+
+export const CodeOutput = ({ label, subtext }: CodeGenerateProps) => {
+    return (
+        <>
+            <div className="card w-56 md:w-80 bg-base-100  card-sm md:card-md shadow-sm">
+                <div className="card-body">
+                    <h2 className="card-title">{label}</h2>
+                    <p>{subtext}</p>
+                    {/*Code Input Form Begin*/}
+                    <div className='flex flex-row no-wrap'>
+                        {/*Button to generate a code*/}
+                        <GenerateCodeButton />
+
+                    </div>
+                </div>
+            </div>
         </>
     );
 }

@@ -9,14 +9,17 @@ import { auth } from "@/lib/firebase";
 //Has methods getIdToken
 type AuthContextType = {
     user: any | null;//firebase user contains their UID, email, connected name, photURL if set,providerData(which auth provider)
+    userLoading:boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({
     user: null,
+    userLoading:true,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<any | null>(null);
+    const [userLoading,setUserLoading] = useState(true); 
 
     useEffect(() => {
         // Firebase listener: fires on login, logout, refresh
@@ -24,11 +27,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (firebaseUser) {
                 const tokenResult = await getIdTokenResult(firebaseUser, true);
                 setUser(firebaseUser);
+
                 
             } else {
                 setUser(null);
                 
             }
+            setUserLoading(false);
             
         });
 
@@ -36,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user}}>
+        <AuthContext.Provider value={{ user,userLoading}}>
             {children}
         </AuthContext.Provider>
     );

@@ -49,7 +49,7 @@ functions:
             method: post
             cors: true
         - http:
-            path: admin/redeem-invite
+            path: student/redeem-invite
             method: post
             cors: true
   admin:
@@ -61,11 +61,11 @@ functions:
       events:
         - http:
             path: admin/create-invite
-            method: get
+            method: post
             cors: true
         - http:
-            path: admin/create-invite
-            method: get
+            path: admin/redeem-invite
+            method: post
             cors: true
 
 
@@ -83,3 +83,4 @@ functions:
       - http:
           path: auth/linkedin/callback
           method: get
+          

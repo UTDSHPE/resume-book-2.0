@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { getAuth } from "firebase/auth";
 import { app,auth, db, storage } from '@/lib/firebase'
 import { useAuth } from "@/app/context/AuthContext";
+import LoadingSpinner from "./LoadingSpinner";
 
 export default function RoleRedirect() {
     const router = useRouter();
-    const {user,role,loading} = useAuth();
+    const {user,userLoading} = useAuth();
 
     useEffect(() => {
         const user = auth.currentUser;
@@ -29,8 +30,6 @@ export default function RoleRedirect() {
     }, [router]);
 
     return (
-        <div className="bg-white flex items-center  min-h-screen w-full">
-            <span className="loading loading-spinner mx-auto loading-xl text-primary"></span>
-        </div>
+        <LoadingSpinner label="Redirecting to dashboard..."/>
     );
 }
