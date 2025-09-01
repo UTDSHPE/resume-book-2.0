@@ -29,44 +29,38 @@ build:
       - firebase-admin
 
 functions:
-
-  invites:
-    handler: src/functions/student/handler.main
-    package: 
-      patterns:
-        - src/functions/student/**
-        - node_modules/**
-        
   student:
     handler: src/functions/student/handler.main
     package: 
       patterns:
         - src/functions/student/**
         - node_modules/**
-      events:
-        - http:
-            path: student/create-invite
-            method: post
-            cors: true
-        - http:
-            path: student/redeem-invite
-            method: post
-            cors: true
+    events:          # events must be at the same level as package
+      - http:
+          path: student/create-invite
+          method: post
+          cors: true
+      - http:
+          path: student/redeem-invite
+          method: post
+          cors: true
+
   admin:
     handler: src/functions/admin/handler.main
     package: 
       patterns:
         - src/functions/admin/**
         - node_modules/**
-      events:
-        - http:
-            path: admin/create-invite
-            method: post
-            cors: true
-        - http:
-            path: admin/redeem-invite
-            method: post
-            cors: true
+    events:
+      - http:
+          path: admin/create-invite
+          method: post
+          cors: true
+      - http:
+          path: admin/redeem-invite
+          method: post
+          cors: true
+
 
 
   auth:
