@@ -29,6 +29,13 @@ build:
       - firebase-admin
 
 functions:
+  invites:
+    handler: src/functions/invites/handler.main
+    package: 
+      patterns:
+        - src/functions/invites/**
+        - node_modules/**
+  
   student:
     handler: src/functions/student/handler.main
     package: 

@@ -97,7 +97,7 @@ const GenerateCodeButton = () => {
         const role = tokenResult.claims.role;              // your custom claim
 
         const invokeURL =
-            process.env.NEXT_PUBLIC_API_GATEWAY_INVOKE_URL + "admin/create-invite";
+            process.env.NEXT_PUBLIC_API_GATEWAY_INVOKE_URL + "student/create-invite";
 
         const response = await axios.post(
             invokeURL,
