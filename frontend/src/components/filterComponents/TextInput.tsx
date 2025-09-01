@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { LuRefreshCw } from "react-icons/lu";
 import axios from 'axios';
+import { useAuth } from "@/app/context/AuthContext";
+
+const { user } = useAuth();
 
 interface NameInputProps {
     label: string;
@@ -76,26 +79,46 @@ export const NameInput = ({ label, required }: NameInputProps) => {
 };
 
 interface handleGenerateProps{
-
+    
 }
 
 async function handleGenerate(){
     
-    const invokURL = process.env.NEXT_PUBLIC_API_GATEWAY_INVOKE_URL + "admin/create-invite";
+    const invokeURL = process.env.NEXT_PUBLIC_API_GATEWAY_INVOKE_URL + "admin/create-invite";
+    const idToken = user?.getIdToken();
+    const role = idToken.claims.role;//custom claims are attached to a token, in this case our custom claim for role is grabbed from the token
 
-    const 
-    return(
-        
-    );
+    const response = await axios.post(
+        invokeURL,
+        {
+            uid:user,
+            role:role,
+        },
+        {headers:{Authorization:`Bearer ${idToken}`}}
+    )
+    return;
 }
 const generateCodeButton = ()=>{
+
     const [loading,setLoading] = useState(false);
-    const 
+    const handleClick = async()=>{
+        try{
+            setLoading(true);
+            const data = await handleGenerate();
+        }
+        catch (err){
+            console.error("Error generating invite");
+        }
+        finally{
+            setLoading(false);
+        }
+    }
     return(
     <div>
 
         <button className="btn btn-square"
-        onClick={}>
+        onClick={handleClick} disabled={loading}
+        >
         
         {loading?//whenever the click it it'll start loading
         <span className="loading loading-spinner"></span>:
@@ -123,7 +146,7 @@ export const CodeInput = ({label,required,buttonLabel,subtext,onChange}:codeInpu
                         {/*text input */}
                         <div className="w-full max-w-xs">
                             <fieldset className="fieldset">
-                                {is}
+                                {/* */}
                                 <input
                                     type="text"
                                     placeholder="Type here"
