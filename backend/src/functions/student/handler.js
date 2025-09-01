@@ -9,7 +9,18 @@ export async function main(event) {
         const path = event.path || "";
         const method = event.httpMethod;
         const idToken = event.headers.Authorization?.replace("Bearer ", "");
-
+        
+        if (event.httpMethod === "OPTIONS") {
+            return {
+                statusCode: 200,
+                headers: {
+                    "Access-Control-Allow-Origin": "http://localhost:3000",
+                    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+                    "Access-Control-Allow-Methods": "OPTIONS,POST",
+                },
+                body: "",
+            };
+        }
         // Routing table
         if (path.endsWith("/student/create-invite") && method === "POST") {
             // Students can only create student invites → force role = "student"

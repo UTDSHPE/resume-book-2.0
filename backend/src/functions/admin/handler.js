@@ -9,7 +9,18 @@ export async function main(event) {
         const path = event.path || "";
         const method = event.httpMethod;
         const idToken = event.headers.Authorization?.replace("Bearer ", "");
-
+        
+        if (method === "OPTIONS") {
+            return {
+                statusCode: 200,
+                headers: {
+                    "Access-Control-Allow-Origin": "http://localhost:3000",
+                    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+                    "Access-Control-Allow-Methods": "OPTIONS,POST",
+                },
+                body: "",
+            };
+        }
         // Routing table
         if (path.endsWith("/admin/create-invite") && method === "POST") {
             const { role, expiresInDays, accessTermMonths } = JSON.parse(event.body || "{}");
