@@ -16,14 +16,26 @@ export async function main(event) {
             const { expiresInDays, accessTermMonths } = JSON.parse(event.body || "{}");
 
             const result = await createInvite({ idToken, role: "student", expiresInDays, accessTermMonths });
-            return { statusCode: 200, body: JSON.stringify(result) };
+            return { statusCode: 200, 
+                headers: {
+                    "Access-Control-Allow-Origin": "*", // or http://localhost:3000 for stricter dev
+                    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+                    "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+
+                }, body: JSON.stringify(result) };
         }
 
         if (path.endsWith("/student/redeem-invite") && method === "POST") {
             const { code } = JSON.parse(event.body || "{}");
 
             const result = await redeemInvite({ idToken, code });
-            return { statusCode: 200, body: JSON.stringify(result) };
+            return { statusCode: 200, 
+                headers: {
+                    "Access-Control-Allow-Origin": "*", // or http://localhost:3000 for stricter dev
+                    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+                    "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+
+                }, body: JSON.stringify(result) };
         }
 
         return { statusCode: 404, body: JSON.stringify({ error: "Not Found" }) };
