@@ -16,13 +16,6 @@ export async function main(event) {
         const method = event.httpMethod;
         const idToken = event.headers.Authorization?.replace("Bearer ", "");
 
-        if (method === "OPTIONS") {
-            return {
-                statusCode: 200,
-                headers: corsHeaders,
-                body: "",
-            };
-        }
         // Routing table
         if (path.endsWith("/student/create-invite") && method === "POST") {
             // Students can only create student invites → force role = "student"
