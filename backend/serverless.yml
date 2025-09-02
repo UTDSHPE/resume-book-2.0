@@ -47,7 +47,7 @@ functions:
           path: student/create-invite
           method: post
           cors:
-            origin: http://localhost:3000
+            origin: "*"
             headers:
               - Content-Type
               - Authorization
@@ -56,7 +56,7 @@ functions:
           path: student/redeem-invite
           method: post
           cors:
-            origin: http://localhost:3000
+            origin: "*"
             headers:
               - Content-Type
               - Authorization
@@ -73,7 +73,7 @@ functions:
           path: admin/create-invite
           method: post
           cors:
-            origin: http://localhost:3000
+            origin: "*"
             headers:
               - Content-Type
               - Authorization
@@ -82,7 +82,7 @@ functions:
           path: admin/redeem-invite
           method: post
           cors:
-            origin: http://localhost:3000
+            origin: "*"
             headers:
               - Content-Type
               - Authorization
