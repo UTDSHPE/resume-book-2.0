@@ -35,14 +35,7 @@ functions:
       patterns:
         - src/functions/invites/**
         - node_modules/**
-  
-  student:
-    handler: src/functions/student/handler.main
-    package: 
-      patterns:
-        - src/functions/student/**
-        - node_modules/**
-    events:          # events must be at the same level as package
+    events:
       - http:
           path: student/create-invite
           method: post
@@ -61,14 +54,6 @@ functions:
               - Content-Type
               - Authorization
             allowCredentials: false
-
-  admin:
-    handler: src/functions/admin/handler.main
-    package: 
-      patterns:
-        - src/functions/admin/**
-        - node_modules/**
-    events:
       - http:
           path: admin/create-invite
           method: post
@@ -88,9 +73,6 @@ functions:
               - Authorization
             allowCredentials: false
 
-
-
-
   auth:
     handler: src/functions/auth/handler.main
     package:
@@ -105,4 +87,4 @@ functions:
       - http:
           path: auth/linkedin/callback
           method: get
-          
+          cors: true
