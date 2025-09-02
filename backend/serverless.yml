@@ -1,3 +1,33 @@
+service: resumebook-backend
+frameworkVersion: '4'
+
+package:
+  individually: true
+  excludeDevDependencies: true
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: us-east-1
+  stage: ${opt:stage, 'prod'}
+  environment:
+    FIREBASE_PROJECT_ID: ${env:FIREBASE_PROJECT_ID}
+    FIREBASE_PRIVATE_KEY: ${env:FIREBASE_PRIVATE_KEY}
+    LINKEDIN_CLIENT_ID: ${env:LINKEDIN_CLIENT_ID}
+    LINKEDIN_CLIENT_SECRET: ${env:LINKEDIN_CLIENT_SECRET}
+    LINKEDIN_REDIRECT_URI: ${env:LINKEDIN_REDIRECT_URI}
+    FRONTEND_REDIRECT_URI: ${env:FRONTEND_REDIRECT_URI}
+
+# Built-in esbuild in v4 (no serverless-esbuild plugin)
+build:
+  esbuild:
+    bundle: false
+    minify: false
+    sourcemap: true
+    external:
+      - aws-sdk
+      - firebase-admin
+
 functions:
   api:
     handler: src/handler.main
