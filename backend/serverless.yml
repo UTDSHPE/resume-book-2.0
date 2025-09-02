@@ -30,13 +30,7 @@ functions:
         - src/**
         - package.json
         - package-lock.json
-        - node_modules/**         # include backend deps right from backend/
-        # Optional: keep the zip lean
-        - '!**/*.test.*'
-        - '!**/__tests__/**'
-        - '!**/.eslint*'
-        - '!**/.prettier*'
-        - '!**/*.md'
+        - node_modules/** # include backend deps right from backend/
     events:
       - http:
           path: auth/linkedin

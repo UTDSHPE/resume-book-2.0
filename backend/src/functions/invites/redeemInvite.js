@@ -1,6 +1,6 @@
 // backend/src/functions/invites/redeemInvite.js
 import crypto from 'crypto';
-import { auth, db } from '../firebase.js';
+import { auth, db } from '../auth/firebase.js';
 
 /* 
 Summary / Purpose of Redeem Function:
