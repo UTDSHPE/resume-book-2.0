@@ -1,35 +1,32 @@
-// firebase.mjs
-import admin from 'firebase-admin';
+// backend/src/functions/auth/firebase.js
+import admin from "firebase-admin";
 
-let auth, db;
+// Only initialize once per cold start
+if (!admin.apps.length) {
+    try {
+        console.log("[FB] Initializing Firebase Admin…");
 
-// Initialize Firebase Admin once per cold start
-try {
-    console.log('[FB] Parsing FIREBASE_PRIVATE_KEY JSON…');
-    const serviceAccount = JSON.parse(process.env.FIREBASE_PRIVATE_KEY);
+        // Parse FIREBASE_PRIVATE_KEY from env
+        const serviceAccount = JSON.parse(process.env.FIREBASE_PRIVATE_KEY);
 
-    if (!admin.apps.length) {
-        console.log('[FB] Initializing Firebase Admin…', {
-            projectId: serviceAccount.project_id,
-            clientEmail: serviceAccount.client_email,
-        });
         admin.initializeApp({
             credential: admin.credential.cert({
                 projectId: serviceAccount.project_id,
                 clientEmail: serviceAccount.client_email,
-                privateKey: serviceAccount.private_key.replace(/\\n/g, '\n'),
+                privateKey: serviceAccount.private_key.replace(/\\n/g, "\n"), // fix newline issue
             }),
         });
-    } else {
-        console.log('[FB] Reusing existing Firebase Admin app (warm start).');
+    } catch (err) {
+        console.error("[FB] Failed to initialize Firebase Admin:", err);
+        throw err; // hard fail so you notice misconfig immediately
     }
-
-    auth = admin.auth();
-    db = admin.firestore();
-} catch (e) {
-    console.error('[FB] Failed to initialize Firebase Admin:', e);
-    throw e;
+} else {
+    console.log("[FB] Reusing existing Firebase Admin app (warm start).");
 }
+
+// define these as constants so they’re never undefined
+const auth = admin.auth();
+const db = admin.firestore();
 
 export { admin, auth, db };
 
@@ -38,11 +35,14 @@ export async function createCustomToken(uid, claims = {}) {
     return auth.createCustomToken(uid, claims);
 }
 
-export async function ensureAuthUser(uid, { email, displayName, photoURL } = {}) {
+export async function ensureAuthUser(
+    uid,
+    { email, displayName, photoURL } = {}
+) {
     try {
         await auth.getUser(uid);
     } catch (err) {
-        if (err.code === 'auth/user-not-found') {
+        if (err.code === "auth/user-not-found") {
             await auth.createUser({ uid, email, displayName, photoURL });
         } else {
             throw err;
@@ -53,7 +53,11 @@ export async function ensureAuthUser(uid, { email, displayName, photoURL } = {})
 export async function upsertProfile(collection, uid, data) {
     const docRef = db.collection(collection).doc(uid);
     await docRef.set(
-        { ...data, uid, updatedAt: admin.firestore.FieldValue.serverTimestamp() },
+        {
+            ...data,
+            uid,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
         { merge: true }
     );
 }

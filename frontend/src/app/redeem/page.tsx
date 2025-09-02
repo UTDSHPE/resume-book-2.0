@@ -15,15 +15,15 @@ export default function Redeem() {
                     card-body bg-base-300 border-black/10 border-[4px] p-6 rounded-2xl '>
                      <CodeInput
                         label='Redeem Code'
-                        subtext="Redeem your code to get access to your respective role (admin,recruiter,student)."
+                        subtext="Redeem your code to get access to restricted roles (admin/recruiter)."
                         buttonLabel="Redeem"
                         onChange={setInput}
                      />
 
                      <CodeOutput
                         label="Generate Student Code"
-                        subtext="Generate a code for student access. For admin access or recruiter access, please reach
-                            if we have not already administered one."/>
+                        subtext="Generate a code for student access. For admin access or recruiter access, please reach out
+                            if we have not already administered a redeemable token."/>
 
                   </div>
 

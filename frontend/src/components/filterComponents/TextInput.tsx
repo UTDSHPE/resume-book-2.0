@@ -84,85 +84,140 @@ export const NameInput = ({ label, required }: NameInputProps) => {
 
 
 const GenerateCodeButton = () => {
-    const { user } = useAuth(); 
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
-    const [code,setCode] = useState("");
-    const [isCopied,setIsCopied] =useState(false);
+    const [code, setCode] = useState("");
+    const [isCopied, setIsCopied] = useState(false);
+    const [message, setMessage] = useState("");
 
-    const handleGenerate = async () => {
-        if (!user) throw new Error("No user signed in");
+    if (!user) return null;
 
-        const tokenResult = await user.getIdTokenResult();//Get values from token
-        const idToken = tokenResult.token;                 // the actual JWT string
-        const role = tokenResult.claims.role;              // your custom claim
-
-        const invokeURL =
-            process.env.NEXT_PUBLIC_API_GATEWAY_INVOKE_URL + "student/create-invite"
-
-        console.log("👉 Calling API:", invokeURL);
-        console.log("👉 Body:", { uid: user.uid, role });
-        console.log("👉 Headers:", { Authorization: `Bearer ${idToken}` });
-        const response = await axios.post(
-            invokeURL,
-            { uid: user.uid, role },
-            { headers: { Authorization: `Bearer ${idToken}` } }
-        );
-
-        return response.data;
+    const getAuthHeaders = async () => {
+        const idToken = await user.getIdToken();
+        return { Authorization: `Bearer ${idToken}` };
     };
 
-    const handleClick = async () => {
+    /** ---------- STUDENT SELF-ONBOARD ---------- */
+    const handleStudentClick = async () => {
         try {
             setLoading(true);
-            const data = await handleGenerate();
-            console.log("Invite created:", data);
+            setMessage("");
+            const headers = await getAuthHeaders();
+            const invokeURL =
+                process.env.NEXT_PUBLIC_API_GATEWAY_INVOKE_URL + "student/create-invite";
 
-            setCode(data.code); // Save the generated code into state
+            const res = await axios.post(invokeURL, { uid: user.uid }, { headers });
+
+            if (res.data.autoRedeemed) {
+                setMessage("🎉 You are now a student!");
+                setCode("");
+            } else {
+                setCode(res.data.code);
+            }
         } catch (err) {
-            console.error("Error generating invite", err);
+            console.error("Error creating student invite:", err);
+            setMessage("Error: could not create invite");
         } finally {
             setLoading(false);
         }
     };
 
+    /** ---------- ADMIN INVITE CREATION ---------- */
+    const handleAdminClick = async (targetRole: "recruiter" | "admin") => {
+        try {
+            setLoading(true);
+            setMessage("");
+            const headers = await getAuthHeaders();
+            const invokeURL =
+                process.env.NEXT_PUBLIC_API_GATEWAY_INVOKE_URL + "admin/create-invite";
 
-    const handleCopyClick = async (textCopied:string)=>{
+            const res = await axios.post(
+                invokeURL,
+                { uid: user.uid, role: targetRole },
+                { headers }
+            );
+
+            setCode(res.data.code);
+            setMessage(`✅ ${targetRole} invite created`);
+        } catch (err) {
+            console.error("Error creating admin invite:", err);
+            setMessage("Error: could not create invite");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    /** ---------- COPY TO CLIPBOARD ---------- */
+    const handleCopyClick = async (textCopied: string) => {
         try {
             await navigator.clipboard.writeText(textCopied);
             setIsCopied(true);
-            setTimeout(() => setIsCopied(false), 2000); // Reset "Copied!" message after 2 seconds
+            setTimeout(() => setIsCopied(false), 2000);
         } catch (err) {
-            console.error('Failed to copy text: ', err);
-            // Optionally, provide user feedback for failure
+            console.error("Failed to copy text:", err);
         }
     };
 
     return (
-        <div className="flex flex-row">
+        <div className="flex flex-col gap-3 w-full">
+            {/* Student button always visible */}
             <button
-                className="btn btn-square"
-                onClick={handleClick}
+                className="btn w-full"
+                onClick={handleStudentClick}
                 disabled={loading}
             >
-                {loading ? (
-                    <span className="loading loading-spinner"></span>
-                ) : (
-                    <LuRefreshCw />
-                )}
-            </button>
-            <fieldset>
-                {code}
-            </fieldset>
-            <button
-                className="btn btn-square"
-                onClick={() => handleCopyClick(code)} // arrow functions call only on click
-            >
-                <LuCopy />
+                {loading ? <span className="loading loading-spinner"></span> : "Join as Student"}
             </button>
 
-        </div >
+            {/* Admin-only buttons */}
+            {user.role === "admin" && (
+                <div className="flex flex-col md:flex-row gap-2">
+                    <button
+                        className="btn btn-outline flex-1"
+                        onClick={() => handleAdminClick("recruiter")}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <span className="loading loading-spinner"></span>
+                        ) : (
+                            "Create Recruiter Invite"
+                        )}
+                    </button>
+
+                    <button
+                        className="btn btn-outline flex-1"
+                        onClick={() => handleAdminClick("admin")}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <span className="loading loading-spinner"></span>
+                        ) : (
+                            "Create Admin Invite"
+                        )}
+                    </button>
+                </div>
+            )}
+
+            {/* Results */}
+            {message && <p className="text-sm">{message}</p>}
+            {code && (
+                <div className="flex items-center gap-2 break-all">
+                    <fieldset className="border px-2 py-1 text-sm w-full max-w-xs truncate">
+                        {code}
+                    </fieldset>
+                    <button
+                        className="btn btn-square"
+                        onClick={() => handleCopyClick(code)}
+                    >
+                        <LuCopy />
+                    </button>
+                    {isCopied && <span className="text-xs text-green-500">Copied!</span>}
+                </div>
+            )}
+        </div>
     );
 };
+
 
 
 export const CodeInput = ({label,required,buttonLabel,subtext,onChange}:codeInputProps) =>{
