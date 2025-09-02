@@ -46,11 +46,21 @@ functions:
       - http:
           path: student/create-invite
           method: post
-          cors: true
+          cors:
+            origin: http://localhost:3000
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
       - http:
           path: student/redeem-invite
           method: post
-          cors: true
+          cors:
+            origin: http://localhost:3000
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
 
   admin:
     handler: src/functions/admin/handler.main
@@ -62,11 +72,22 @@ functions:
       - http:
           path: admin/create-invite
           method: post
-          cors: true
+          cors:
+            origin: http://localhost:3000
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
       - http:
           path: admin/redeem-invite
           method: post
-          cors: true
+          cors:
+            origin: http://localhost:3000
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+
 
 
 
