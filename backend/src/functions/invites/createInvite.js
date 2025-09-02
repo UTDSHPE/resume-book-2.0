@@ -7,6 +7,7 @@
  * @returns {Promise<{code: string, role: string, accessTermMonths: number, expiresAt: Date}>}
  */
 import { auth, db } from '../auth/firebase.js';
+import crypto from "crypto";
 
 export async function createInvite({ idToken, role , expiresInDays = 7, accessTermMonths = 6 }) {
     // 1. Verify caller
