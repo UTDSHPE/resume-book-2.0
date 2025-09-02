@@ -18,15 +18,9 @@ provider:
     LINKEDIN_REDIRECT_URI: ${env:LINKEDIN_REDIRECT_URI}
     FRONTEND_REDIRECT_URI: ${env:FRONTEND_REDIRECT_URI}
 
-# Built-in esbuild in v4
+# Disable v4's native esbuild so it doesn't try to stage .serverless/build/package.json
 build:
-  esbuild:
-    bundle: false
-    minify: false
-    sourcemap: true
-    external:
-      - aws-sdk
-      - firebase-admin
+  esbuild: false
 
 functions:
   api:
@@ -36,29 +30,65 @@ functions:
         - src/**
         - package.json
         - package-lock.json
-        - node_modules/**
+        - node_modules/**         # include backend deps right from backend/
+        # Optional: keep the zip lean
+        - '!**/*.test.*'
+        - '!**/__tests__/**'
+        - '!**/.eslint*'
+        - '!**/.prettier*'
+        - '!**/*.md'
     events:
       - http:
           path: auth/linkedin
           method: get
-          cors: true
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
       - http:
           path: auth/linkedin/callback
           method: get
-          cors: true
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
       - http:
           path: student/create-invite
           method: post
-          cors: true
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
       - http:
           path: student/redeem-invite
           method: post
-          cors: true
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
       - http:
           path: admin/create-invite
           method: post
-          cors: true
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
       - http:
           path: admin/redeem-invite
           method: post
-          cors: true
+          cors:
+            origin: "*"
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
