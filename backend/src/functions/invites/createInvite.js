@@ -6,8 +6,9 @@
  * @param {number} accessTermMonths - How many months of access the role lasts (6 or 12, default 6).
  * @returns {Promise<{code: string, role: string, accessTermMonths: number, expiresAt: Date}>}
  */
+import { auth, db } from '../auth/firebase.js';
 
-export async function createInvite({ idToken, role ='student ', expiresInDays = 7, accessTermMonths = 6 }) {
+export async function createInvite({ idToken, role , expiresInDays = 7, accessTermMonths = 6 }) {
     // 1. Verify caller
     const decoded = await auth.verifyIdToken(idToken);
     if (!decoded?.uid) throw new Error("Unauthorized");
@@ -17,7 +18,7 @@ export async function createInvite({ idToken, role ='student ', expiresInDays = 
     if (callerRole === 'admin') {
         if (!['recruiter', 'admin'].includes(role)) throw new Error("Admins can only create recruiter/admin invites");
     } else {
-        if (role !== 'student') throw new Error("Students can only create student invites");
+        if (callerRole !== 'student') throw new Error("Students can only create student invites");//
     }
 
     // 3. Validate term

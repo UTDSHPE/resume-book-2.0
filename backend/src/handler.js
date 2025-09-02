@@ -38,15 +38,43 @@ export async function main(event) {
         if (path.endsWith("/student/create-invite") && method === "POST") {
             const { expiresInDays, accessTermMonths } = JSON.parse(event.body || "{}");
             const idToken = headers.Authorization?.replace("Bearer ", "");
-            const result = await createInvite({ idToken, role: "student", expiresInDays, accessTermMonths });
-            return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
+
+            // Decode once so we can see if user has a role
+            const decoded = await auth.verifyIdToken(idToken);
+            const currentRole = decoded.role || null;
+
+            // Always create a student invite
+            const invite = await createInvite({
+                idToken,
+                role: "student",
+                expiresInDays,
+                accessTermMonths,
+            });
+
+            if (!currentRole) {
+                // No role yet → immediately redeem
+                const redeemed = await redeemInvite({ idToken, code: invite.code });
+                return {
+                    statusCode: 200,
+                    headers: corsHeaders,
+                    body: JSON.stringify({
+                        autoRedeemed: true,
+                        ...redeemed,
+                    }),
+                };
+            }
+
+            // Otherwise just return the invite code
+            return {
+                statusCode: 200,
+                headers: corsHeaders,
+                body: JSON.stringify({
+                    autoRedeemed: false,
+                    ...invite,
+                }),
+            };
         }
-        if (path.endsWith("/student/redeem-invite") && method === "POST") {
-            const { code } = JSON.parse(event.body || "{}");
-            const idToken = headers.Authorization?.replace("Bearer ", "");
-            const result = await redeemInvite({ idToken, code });
-            return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(result) };
-        }
+
 
         // ---------- ADMIN ----------
         if (path.endsWith("/admin/create-invite") && method === "POST") {
