@@ -34,6 +34,8 @@ functions:
     package:
       patterns:
         - src/**
+        - package.json
+        - package-lock.json
         - node_modules/**
     events:
       - http:
