@@ -1,84 +1,10 @@
-service: resumebook-backend
-frameworkVersion: '4'
-
-package:
-  individually: true
-  excludeDevDependencies: true
-
-provider:
-  name: aws
-  runtime: nodejs22.x
-  region: us-east-1
-  stage: ${opt:stage, 'prod'}
-  environment:
-    FIREBASE_PROJECT_ID: ${env:FIREBASE_PROJECT_ID}
-    FIREBASE_PRIVATE_KEY: ${env:FIREBASE_PRIVATE_KEY}
-    LINKEDIN_CLIENT_ID: ${env:LINKEDIN_CLIENT_ID}
-    LINKEDIN_CLIENT_SECRET: ${env:LINKEDIN_CLIENT_SECRET}
-    LINKEDIN_REDIRECT_URI: ${env:LINKEDIN_REDIRECT_URI}
-    FRONTEND_REDIRECT_URI: ${env:FRONTEND_REDIRECT_URI}
-
-# Built-in esbuild in v4 (no serverless-esbuild plugin)
-build:
-  esbuild:
-    bundle: false
-    minify: false
-    sourcemap: true
-    external:
-      - aws-sdk
-      - firebase-admin
-
 functions:
-  invites:
-    handler: src/functions/invites/handler.main
-    package: 
-      patterns:
-        - src/functions/invites/**
-        - node_modules/**
-    events:
-      - http:
-          path: student/create-invite
-          method: post
-          cors:
-            origin: "*"
-            headers:
-              - Content-Type
-              - Authorization
-            allowCredentials: false
-      - http:
-          path: student/redeem-invite
-          method: post
-          cors:
-            origin: "*"
-            headers:
-              - Content-Type
-              - Authorization
-            allowCredentials: false
-      - http:
-          path: admin/create-invite
-          method: post
-          cors:
-            origin: "*"
-            headers:
-              - Content-Type
-              - Authorization
-            allowCredentials: false
-      - http:
-          path: admin/redeem-invite
-          method: post
-          cors:
-            origin: "*"
-            headers:
-              - Content-Type
-              - Authorization
-            allowCredentials: false
-
-  auth:
-    handler: src/functions/auth/handler.main
+  api:
+    handler: src/handler.main
     package:
       patterns:
-        - src/functions/auth/**
-        - node_modules/**        # include all runtime deps
+        - src/**
+        - node_modules/**
     events:
       - http:
           path: auth/linkedin
@@ -87,4 +13,20 @@ functions:
       - http:
           path: auth/linkedin/callback
           method: get
+          cors: true
+      - http:
+          path: student/create-invite
+          method: post
+          cors: true
+      - http:
+          path: student/redeem-invite
+          method: post
+          cors: true
+      - http:
+          path: admin/create-invite
+          method: post
+          cors: true
+      - http:
+          path: admin/redeem-invite
+          method: post
           cors: true
