@@ -5,6 +5,7 @@ import admin from "firebase-admin";
 if (!admin.apps.length) {
     try {
         console.log("[FB] Initializing Firebase Admin…");
+        console.log("FIREBASE_PRIVATE_KEY raw:", process.env.FIREBASE_PRIVATE_KEY?.slice(0, 100));
 
         // Parse FIREBASE_PRIVATE_KEY from env
         const serviceAccount = JSON.parse(process.env.FIREBASE_PRIVATE_KEY);
