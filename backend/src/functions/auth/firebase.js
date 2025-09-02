@@ -8,6 +8,8 @@ if (!admin.apps.length) {
 
         // Parse FIREBASE_PRIVATE_KEY from env
         const serviceAccount = JSON.parse(process.env.FIREBASE_PRIVATE_KEY);
+        console.log("[FB] First 200 chars of private key:");
+        console.log(process.env.FIREBASE_PRIVATE_KEY.slice(0, 200));
 
         admin.initializeApp({
             credential: admin.credential.cert({
@@ -23,6 +25,10 @@ if (!admin.apps.length) {
 } else {
     console.log("[FB] Reusing existing Firebase Admin app (warm start).");
 }
+const serviceAccount = JSON.parse(process.env.FIREBASE_PRIVATE_KEY);
+console.log("[FB] Parsed private_key preview:");
+console.log(serviceAccount.private_key.slice(0, 200));
+
 
 // define these as constants so they’re never undefined
 const auth = admin.auth();
