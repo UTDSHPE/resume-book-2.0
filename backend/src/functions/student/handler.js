@@ -16,7 +16,7 @@ export async function main(event) {
         const method = event.httpMethod;
         const idToken = event.headers.Authorization?.replace("Bearer ", "");
 
-        if (event.httpMethod === "OPTIONS") {
+        if (method === "OPTIONS") {
             return {
                 statusCode: 200,
                 headers: corsHeaders,
@@ -41,7 +41,7 @@ export async function main(event) {
                 headers: corsHeaders, body: JSON.stringify(result) };
         }
 
-        return { statusCode: 404, body: JSON.stringify({ error: "Not Found" }) };
+        return { statusCode: 404, headers:corsHeaders,body: JSON.stringify({ error: "Not Found" }) };
     } catch (err) {
         console.error("[STUDENT] Handler error:", err);
         return { statusCode: 500,headers:corsHeaders, body: JSON.stringify({ error: err.message || "Internal Server Error" }) };
