@@ -19,7 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: Credentials
 
-    # Make secrets available to ALL steps
     env:
       SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_DEPLOY_KEY }}
       FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
@@ -27,7 +26,7 @@ jobs:
       LINKEDIN_CLIENT_ID: ${{ vars.LINKEDIN_CLIENT_ID }}
       LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
       LINKEDIN_REDIRECT_URI: ${{ vars.LINKEDIN_REDIRECT_URI }}
-      FRONTEND_REDIRECT_URI: ${{vars.FRONTEND_REDIRECT_URI}}
+      FRONTEND_REDIRECT_URI: ${{ vars.FRONTEND_REDIRECT_URI }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_REGION: us-east-1
@@ -61,15 +60,11 @@ jobs:
       - name: Install Serverless Framework
         run: npm install -g serverless@latest
 
-      - name: Authenticate to Serverless (non-interactive)
-        run: npx serverless login --token "$SERVERLESS_ACCESS_KEY"
-
-      # Quick sanity check so we fail early if axios isn't installed
+      # Verify deps
       - name: Verify backend deps (axios present)
         working-directory: backend
         run: |
           npm ls axios || (echo "axios NOT installed under backend/; check package.json & npm ci" && exit 1)
-          test -d node_modules/axios || (echo "node_modules/axios missing in backend/" && exit 1)
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

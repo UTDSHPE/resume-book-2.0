@@ -18,7 +18,7 @@ provider:
     LINKEDIN_REDIRECT_URI: ${env:LINKEDIN_REDIRECT_URI}
     FRONTEND_REDIRECT_URI: ${env:FRONTEND_REDIRECT_URI}
 
-# Built-in esbuild in v4 (no serverless-esbuild plugin)
+# Built-in esbuild in v4
 build:
   esbuild:
     bundle: false
