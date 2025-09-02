@@ -2,7 +2,7 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import jwksClient from 'jwks-rsa';
-import { auth, createCustomToken, ensureAuthUser, upsertProfile } from '../auth/firebase.js';
+import { auth, createCustomToken, ensureAuthUser, upsertProfile } from './firebase.js';
 
 const {
     LINKEDIN_CLIENT_SECRET,
