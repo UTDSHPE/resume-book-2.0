@@ -84,6 +84,7 @@ export default function RecruiterDashboard() {
                 <main className="flex-1 bg-white p-4">
                     <div className='card bg-base-200 shadow-md h-full'>
                         {/* Results go here */}
+
                     </div>
                 </main>
             </div>

@@ -1,9 +1,11 @@
 "use client";
 import { useReducer } from "react";
+import type React from "react";
+import { SocialPlatform, Links } from "@/components/filterComponents/LinkInput";
 
 export type Availability = "Full-time" | "Internship";
 export type GradSemester = "Spring" | "Fall" | null;
-import type { SocialPlatform } from "@/components/filterComponents/LinkInput";
+
 export type ProfileForm = {
     firstName: string;
     lastName: string;
@@ -18,7 +20,7 @@ export type ProfileForm = {
     workAuthorized: boolean;
     profilePhoto: string | null;
     resumeUrl: string | null;
-    links:SocialPlatform[];
+    links: Links; // ✅ same type as LinkInput file
 };
 
 export const initial: ProfileForm = {
@@ -35,7 +37,12 @@ export const initial: ProfileForm = {
     workAuthorized: false,
     profilePhoto: null,
     resumeUrl: null,
-    links: [],
+    links: {
+        [SocialPlatform.Github]: "",
+        [SocialPlatform.LinkedIn]: "",
+        [SocialPlatform.Twitter]: "",
+        [SocialPlatform.Website]: "",
+    },
 };
 
 export type Action =
@@ -62,17 +69,18 @@ export function useProfileForm(defaults?: Partial<ProfileForm>) {
     const update = <K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) =>
         dispatch({ type: "set", key, value });
 
-    // For custom components that call onChange(value)
     const bind = <K extends keyof ProfileForm>(key: K) => ({
         value: form[key] as ProfileForm[K],
         onChange: (v: ProfileForm[K]) => update(key, v),
     });
 
-    // For native inputs (event → value)
     const bindInput = <K extends keyof ProfileForm>(key: K) => ({
         value: (form[key] ?? "") as any,
-        onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-            update(key, (e.target as HTMLInputElement).value as any),
+        onChange: (
+            e: React.ChangeEvent<
+                HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+            >
+        ) => update(key, (e.target as HTMLInputElement).value as any),
     });
 
     const bindNumber = <K extends keyof ProfileForm>(key: K) => ({
@@ -86,8 +94,22 @@ export function useProfileForm(defaults?: Partial<ProfileForm>) {
     const bindCheckbox = (key: keyof ProfileForm) => ({
         checked: Boolean(form[key]),
         onChange: (e: React.ChangeEvent<HTMLInputElement> | boolean) =>
-            update(key as any, typeof e === "boolean" ? e : (e.target as HTMLInputElement).checked),
+            update(
+                key as any,
+                typeof e === "boolean"
+                    ? e
+                    : (e.target as HTMLInputElement).checked
+            ),
     });
 
-    return { form, update, bind, bindInput, bindNumber, bindCheckbox };
+    // ✅ helpers for nested links
+    type LinkKey = keyof Links; // = SocialPlatform
+    const updateLink = (k: LinkKey, url: string) =>
+        update("links", { ...form.links, [k]: url });
+    const bindLink = (k: LinkKey) => ({
+        value: form.links[k],
+        onChange: (v: string) => updateLink(k, v),
+    });
+
+    return { form, update, bind, bindInput, bindNumber, bindCheckbox, updateLink, bindLink };
 }

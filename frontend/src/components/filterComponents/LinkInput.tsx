@@ -12,8 +12,7 @@ export enum SocialPlatform {
     Website = "website",
 }
 
-// One object that holds all social links, keyed by enum
-export type SocialLinks = Partial<Record<SocialPlatform, string>>;
+export type Links = Record<SocialPlatform, string>;
 
 /* =========================
    Metadata per platform
@@ -48,28 +47,16 @@ const META: Record<
    Single input row
    ========================= */
 type LinkRowProps = {
-    platform: SocialPlatform;                /** Which key to edit */
-    value: string;                           /** Current value from parent */
-    onChange: (url: string) => void;         /** Update this one key */
-    className?: string;
-    required?: boolean;
-    pattern?: string;                        /** Regex pattern (defaults to https://...) */
-    title?: string;                          /** Error tooltip */
+    platform: SocialPlatform;
+    value: string;
+    onChange: (url: string) => void;
 };
 
-export const LinkRow: React.FC<LinkRowProps> = ({
-    platform,
-    value,
-    onChange,
-    className = "",
-    required,
-    pattern = "^https://.+",
-    title = "Must be a valid URL (https:// prefix)",
-}) => {
+export const LinkRow: React.FC<LinkRowProps> = ({ platform, value, onChange }) => {
     const { label, Icon, placeholder } = META[platform];
 
     return (
-        <label className={`form-control text-base-content text-sm ${className}`}>
+        <label className="form-control text-base-content text-sm">
             <span className="label-text">{label}</span>
             <div className="flex items-center gap-2">
                 <Icon className="text-2xl opacity-80" />
@@ -77,14 +64,10 @@ export const LinkRow: React.FC<LinkRowProps> = ({
                     type="url"
                     className="input input-bordered w-full"
                     placeholder={placeholder}
-                    required={required}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    pattern={pattern}
-                    title={title}
                 />
             </div>
-            <span className="label-text-alt"> </span>
         </label>
     );
 };
@@ -93,18 +76,22 @@ export const LinkRow: React.FC<LinkRowProps> = ({
    Group of inputs (helper)
    ========================= */
 export const SocialLinksFields: React.FC<{
-    links: SocialLinks;                            // controlled object from parent
-    onChange: (next: SocialLinks) => void;         // parent updates state
-    platforms?: SocialPlatform[];                  // optionally choose which to render
-}> = ({ links, onChange, platforms = Object.values(SocialPlatform) }) => (
-    <div className="grid gap-3">
-        {platforms.map((p) => (
-            <LinkRow
-                key={p}
-                platform={p}
-                value={links[p] ?? ""}
-                onChange={(url) => onChange({ ...links, [p]: url })}
-            />
-        ))}
-    </div>
-);
+    links: Links;
+    onChange: (next: Links) => void;
+    platforms?: SocialPlatform[];
+}> = ({
+    links,
+    onChange,
+    platforms = Object.values(SocialPlatform) as SocialPlatform[],
+}) => (
+        <div className="grid gap-3">
+            {platforms.map((p) => (
+                <LinkRow
+                    key={p}
+                    platform={p}
+                    value={links[p]}
+                    onChange={(url) => onChange({ ...links, [p]: url })}
+                />
+            ))}
+        </div>
+    );

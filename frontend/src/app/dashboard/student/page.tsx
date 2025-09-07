@@ -10,12 +10,13 @@ import { DropDown } from "@/components/filterComponents/DropDown";
 import { CheckBox, CheckBoxList } from "@/components/filterComponents/CheckBox";
 import { FileUpload } from "@/components/upload/FileUpload";
 import { useProfileForm, Availability, GradSemester } from "@/app/hooks/useProfileForm";
+import { useAuth } from "@/app/context/AuthContext";
 
-import {useAuth} from '@/app/context/AuthContext';
+// 👇 import the grouped social links component
+import { SocialLinksFields } from "@/components/filterComponents/LinkInput";
 
-import {LinkInput} from '@/components/filterComponents/LinkInput'
 export default function UserDashboard() {
-  const { form, update, bind /* bindInput, bindNumber, bindCheckbox */ } = useProfileForm();
+  const { form, update, bind } = useProfileForm();
 
   return (
     <div className="w-full h-screen">
@@ -75,7 +76,7 @@ export default function UserDashboard() {
                   decimal
                   headTitle="GPA"
                   value={form.gpa ?? undefined}
-                  onChange={(v:number|null) => update("gpa", (v as number) ?? null)}
+                  onChange={(v: number | null) => update("gpa", (v as number) ?? null)}
                 />
 
                 <NumberValidator
@@ -84,74 +85,52 @@ export default function UserDashboard() {
                   decimal={false}
                   headTitle="Graduation Year"
                   value={form.gradYear ?? undefined}
-                  onChange={(v:number|null) => update("gradYear", (v as number) ?? null)}
+                  onChange={(v: number | null) => update("gradYear", (v as number) ?? null)}
                 />
 
-                <div className="">
-                  <DropDown
-                    items={[
-                      "Biomedical Engineering","Computer Engineering","Computer Science","Cybersecurity","Data Science",
-                      "Electrical Engineering","Mechanical Engineering","Software Engineering","Materials Science & Engineering",
-                      "Systems Engineering","Business Information Technology","Other",
-                    ]}
-                    label="Major"
-                    dataLabel=""
-                    {...bind("major")}
-                  />
-                </div>
+                <DropDown
+                  items={[
+                    "Biomedical Engineering", "Computer Engineering", "Computer Science", "Cybersecurity", "Data Science",
+                    "Electrical Engineering", "Mechanical Engineering", "Software Engineering", "Materials Science & Engineering",
+                    "Systems Engineering", "Business Information Technology", "Other",
+                  ]}
+                  label="Major"
+                  dataLabel=""
+                  {...bind("major")}
+                />
 
-                <div className="">
-                  <DropDown
-                    items={["Spring", "Fall"]}
-                    label="Graduation Semester"
-                    dataLabel=""
-                    value={form.gradSemester ?? undefined}
-                    onChange={(v) => update("gradSemester", v as GradSemester)}
-                  />
-                </div>
+                <DropDown
+                  items={["Spring", "Fall"]}
+                  label="Graduation Semester"
+                  dataLabel=""
+                  value={form.gradSemester ?? undefined}
+                  onChange={(v) => update("gradSemester", v as GradSemester)}
+                />
 
-                <div>
-                  <CheckBoxList
-                    title="Availability"
-                    names={["Full-time", "Internship"]}
-                    value={form.availability}
-                    onChange={(arr) => update("availability", arr as Availability[])}
-                  />
-                </div>
+                <CheckBoxList
+                  title="Availability"
+                  names={["Full-time", "Internship"]}
+                  value={form.availability}
+                  onChange={(arr) => update("availability", arr as Availability[])}
+                />
 
-                <div>
-                  <CheckBox
-                    title="U.S. Work Authorization"
-                    checked={form.workAuthorized}
-                    onChange={(v: boolean) => update("workAuthorized", !!v)}
-                  />
-                </div>
+                <CheckBox
+                  title="U.S. Work Authorization"
+                  checked={form.workAuthorized}
+                  onChange={(v: boolean) => update("workAuthorized", !!v)}
+                />
               </div>
             </div>
-            {/* URL's*/}
+
+            {/* Social Links */}
             <div className="card bg-white shadow-sm p-6 rounded-lg my-2">
               <h2 className="text-black font-medium text-sm mb-4 border-b pb-2">
                 Links
               </h2>
-              <div className=" md:grid md:grid-cols-2 gap-x-4 gap-y-2">
-                <LinkInput 
-                platform='linkedin'
-                label='LinkedIn'
-                ></LinkInput>
-                <LinkInput 
-                platform='github'
-                label='GitHub'
-                ></LinkInput>
-                <LinkInput 
-                platform='twitter'
-                label='X/Twitter'
-                ></LinkInput>
-                <LinkInput 
-                platform='website'
-                label='Personal Website/Portfolio'
-                ></LinkInput>
-              </div>
-              
+              <SocialLinksFields
+                links={form.links}
+                onChange={(next) => update("links", next)}
+              />
             </div>
 
             {/* Resume Upload */}
