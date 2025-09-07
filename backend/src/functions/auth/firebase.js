@@ -11,6 +11,10 @@ if (!admin.apps.length) {
         const serviceAccount = JSON.parse(process.env.FIREBASE_PRIVATE_KEY);
         console.log("[FB] First 200 chars of private key:");
         console.log(process.env.FIREBASE_PRIVATE_KEY.slice(0, 200));
+        console.log("[FB] Service account fields:", {
+            projectId: serviceAccount.project_id,
+            clientEmail: serviceAccount.client_email,
+        });
 
         admin.initializeApp({
             credential: admin.credential.cert({
