@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 /* =========================
    Single checkbox
@@ -7,35 +7,24 @@ import React, { useEffect, useState } from "react";
 interface CheckBoxProps {
     title: string;
     // Controlled:
-    checked?: boolean;
-    onChange?: (checked: boolean) => void;
-    // Uncontrolled:
-    defaultChecked?: boolean;
+    checked: boolean; // parent always passes this
+    onChange: (checked: boolean) => void; // parent handles updates
 }
 
 export const CheckBox: React.FC<CheckBoxProps> = ({
     title,
     checked,
     onChange,
-    defaultChecked = false,
 }) => {
-    const isControlled = checked !== undefined;
-    const [local, setLocal] = useState<boolean>(defaultChecked);
-    // if defaultChecked changes later (rare), keep local in sync
-    useEffect(() => { if (!isControlled) setLocal(defaultChecked); }, [defaultChecked, isControlled]);
-
-    const isChecked = isControlled ? !!checked : local;
-
-    const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const next = e.target.checked;
-        if (isControlled) onChange?.(next);
-        else { setLocal(next); onChange?.(next); }
-    };
-
     return (
         <div className="text-xs flex flex-col items-start">
             <span className="label-text text-black font-medium mb-2">{title}</span>
-            <input type="checkbox" className="checkbox" checked={isChecked} onChange={handle} />
+            <input
+                type="checkbox"
+                className="checkbox"
+                checked={checked} // controlled: value always comes from parent
+                onChange={(e) => onChange(e.target.checked)} // notify parent of new value
+            />
         </div>
     );
 };
@@ -48,45 +37,20 @@ interface CheckBoxListProps {
     title?: string;
     names: string[];
     // Controlled:
-    value?: string[];
-    onChange?: (selected: string[]) => void;
-    // Uncontrolled:
-    defaultValue?: string[];
+    value: string[]; // parent passes full array of selected names
+    onChange: (selected: string[]) => void; // parent handles updates
 }
 
-export const CheckBoxList: React.FC<CheckBoxListProps> = ({
-    title,
-    names,
-    value,
-    onChange,
-    defaultValue = [],
-}) => {
-    const isControlled = value !== undefined;
-    const [local, setLocal] = useState<string[]>(defaultValue);
-
-    // keep local in sync if defaultValue changes and we're uncontrolled
-    useEffect(() => { if (!isControlled) setLocal(defaultValue); }, [defaultValue, isControlled]);
-
-    const selected = isControlled ? (value as string[]) : local;
+export const CheckBoxList: React.FC<CheckBoxListProps> = ({title,names,value,onChange,}) => {
 
     const toggle = (name: string) => {
-        // compute the next selection from the current source of truth
-        const next = selected.includes(name)
-            ? selected.filter((n) => n !== name)
-            : [...selected, name];
+        // compute the next selection from the current source of truth (value from parent)
+        const next = value.includes(name)
+            ? value.filter((n) => n !== name) // if the array already has that option, remove it
+            : [...value, name]; // if it's not present, add name to array of currently selected
 
-        if (isControlled) {
-            onChange?.(next);
-        } else {
-            // use functional update to avoid stale state, and emit the fresh array
-            setLocal((prev) => {
-                const updated = prev.includes(name)
-                    ? prev.filter((n) => n !== name)
-                    : [...prev, name];
-                onChange?.(updated);
-                return updated;
-            });
-        }
+        // emit updated array back to parent
+        onChange(next);
     };
 
     return (
@@ -101,8 +65,8 @@ export const CheckBoxList: React.FC<CheckBoxListProps> = ({
                     <input
                         type="checkbox"
                         className="checkbox"
-                        checked={selected.includes(name)}
-                        onChange={() => toggle(name)}
+                        checked={value.includes(name)} // controlled: checked status comes from parent array
+                        onChange={() => toggle(name)} // notify parent with updated array
                     />
                     <span className="label-text text-black text-xs ml-1 mb-[2px]">{name}</span>
                 </label>

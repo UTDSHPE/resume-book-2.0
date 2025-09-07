@@ -1,100 +1,85 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
-import { FaLinkedin, FaGlobe, FaGithubSquare } from "react-icons/fa";
-import { FaSquareXTwitter } from "react-icons/fa6";
+import React from "react";
+import { FaSquareXTwitter, FaSquareGithub, FaLinkedin, FaGlobe } from "react-icons/fa6";
 
-export type SocialPlatform = "github" | "linkedin" | "twitter" | "website";
+/* =========================
+   Enum + types
+   ========================= */
+export enum SocialPlatform {
+    Github = "github",
+    LinkedIn = "linkedin",
+    Twitter = "twitter",
+    Website = "website",
+}
 
-export type SocialURLs =
-    | { github: string }
-    | { linkedin: string }
-    | { twitter: string }
-    | { website: string };
+// One object that holds all social links, keyed by enum
+export type SocialLinks = Partial<Record<SocialPlatform, string>>;
 
-type BaseProps = {
-    platform: SocialPlatform; /** Which type of link this field edits */
-    label?: string; /*Label shown above the input (optional) */
-    className?: string;/* daisyUI/utility classes */
-    required?: boolean;/** HTML required attr pass - through */
-    pattern?: string;/** Pattern check (defaults to a sane URL regex) */
-    title?: string;/** Title shown on pattern mismatch */
+/* =========================
+   Metadata per platform
+   ========================= */
+const META: Record<
+    SocialPlatform,
+    { label: string; Icon: React.ComponentType<{ className?: string }>; placeholder: string }
+> = {
+    [SocialPlatform.Github]: {
+        label: "GitHub",
+        Icon: FaSquareGithub,
+        placeholder: "https://github.com/username",
+    },
+    [SocialPlatform.LinkedIn]: {
+        label: "LinkedIn",
+        Icon: FaLinkedin,
+        placeholder: "https://www.linkedin.com/in/username",
+    },
+    [SocialPlatform.Twitter]: {
+        label: "X (Twitter)",
+        Icon: FaSquareXTwitter,
+        placeholder: "https://x.com/handle",
+    },
+    [SocialPlatform.Website]: {
+        label: "Website",
+        Icon: FaGlobe,
+        placeholder: "https://yourdomain.com",
+    },
 };
 
-/**
- * Controlled usage: pass `value` and `onChange`
- * Uncontrolled usage: pass `defaultValue` (and optionally onChange if you still want notifications)
- */
-type ControlledProps = BaseProps & {//use when the whole is edited as an object like a form or something
-    value: string;
-    defaultValue?: never;
-    onChange: (url: string) => void;
-};
-type UncontrolledProps = BaseProps & {//use when updated individually
-    value?: never;
-    defaultValue?: string;
-    onChange?: (url: string) => void;
+/* =========================
+   Single input row
+   ========================= */
+type LinkRowProps = {
+    platform: SocialPlatform;                /** Which key to edit */
+    value: string;                           /** Current value from parent */
+    onChange: (url: string) => void;         /** Update this one key */
+    className?: string;
+    required?: boolean;
+    pattern?: string;                        /** Regex pattern (defaults to https://...) */
+    title?: string;                          /** Error tooltip */
 };
 
-export type LinkInputProps = ControlledProps | UncontrolledProps;
-
-export const LinkInput: React.FC<LinkInputProps> = ({
+export const LinkRow: React.FC<LinkRowProps> = ({
     platform,
-    label,
+    value,
+    onChange,
     className = "",
     required,
     pattern = "^https://.+",
     title = "Must be a valid URL (https:// prefix)",
-    ...rest
 }) => {
-    // icon per platform
-    const Icon = useMemo(() => {
-        switch (platform) {
-            case "github":
-                return FaGithubSquare;
-            case "linkedin":
-                return FaLinkedin;
-            case "twitter":
-                return FaSquareXTwitter;
-            default:
-                return FaGlobe;
-        }
-    }, [platform]);
-
-    // controlled vs uncontrolled
-    const isControlled = "value" in rest;
-    const [local, setLocal] = useState(rest.defaultValue ?? "");
-
-    // keep local in sync if defaultValue prop changes (rare)
-    useEffect(() => {
-        if (!isControlled && "defaultValue" in rest) {
-            setLocal(rest.defaultValue ?? "");
-        }
-    }, [isControlled, rest]);
-
-    const value = isControlled ? rest.value : local;
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const url = e.target.value;
-        if (isControlled) {
-            rest.onChange?.(url);
-        } else {
-            setLocal(url);
-            rest.onChange?.(url);
-        }
-    };
+    const { label, Icon, placeholder } = META[platform];
 
     return (
         <label className={`form-control text-base-content text-sm ${className}`}>
-            {label && <span className="label-text ">{label}</span>}
+            <span className="label-text">{label}</span>
             <div className="flex items-center gap-2">
                 <Icon className="text-2xl opacity-80" />
                 <input
                     type="url"
                     className="input input-bordered w-full"
-                    placeholder="https://"
+                    placeholder={placeholder}
                     required={required}
                     value={value}
-                    onChange={handleChange}
+                    onChange={(e) => onChange(e.target.value)}
                     pattern={pattern}
                     title={title}
                 />
@@ -104,6 +89,22 @@ export const LinkInput: React.FC<LinkInputProps> = ({
     );
 };
 
-/* ---------- helper, if you still want the one-key union ---------- */
-export const toSocialUnion = (platform: SocialPlatform, url: string): SocialURLs =>
-    ({ [platform]: url } as SocialURLs);
+/* =========================
+   Group of inputs (helper)
+   ========================= */
+export const SocialLinksFields: React.FC<{
+    links: SocialLinks;                            // controlled object from parent
+    onChange: (next: SocialLinks) => void;         // parent updates state
+    platforms?: SocialPlatform[];                  // optionally choose which to render
+}> = ({ links, onChange, platforms = Object.values(SocialPlatform) }) => (
+    <div className="grid gap-3">
+        {platforms.map((p) => (
+            <LinkRow
+                key={p}
+                platform={p}
+                value={links[p] ?? ""}
+                onChange={(url) => onChange({ ...links, [p]: url })}
+            />
+        ))}
+    </div>
+);

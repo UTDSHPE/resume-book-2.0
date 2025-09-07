@@ -10,6 +10,7 @@ export default function RecruiterDashboard() {
     const [availability, setAvailability] = useState<string[]>([]);
     const [year, setYear] = useState<string[]>([]);
     const [semester, setSemester] = useState<string[]>([]);
+    const [major,setMajor] = useState<string[]>([]);
 
     return (
         <div className="w-full h-screen">
@@ -24,12 +25,14 @@ export default function RecruiterDashboard() {
                             <CheckBoxList
                                 title={"Year"}
                                 names={['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduated', 'Masters', 'PhD']}
+                                value = {year}
                                 onChange={setYear}
                             />
 
                             <CheckBoxList
                                 title={"Graduation Semester"}
                                 names={["Fall", "Spring"]}
+                                value={semester}
                                 onChange={setSemester}
                             />
 
@@ -40,6 +43,8 @@ export default function RecruiterDashboard() {
                                     "Electrical Engineering", "Mechanical Engineering", "Software Engineering", "Materials Science & Engineering",
                                     "Systems Engineering", "Business Information Technology","Other"
                                 ]}
+                                value={major}
+                                onChange={setMajor}
                             />
 
                             <NumberValidator
@@ -65,6 +70,7 @@ export default function RecruiterDashboard() {
 
                             <CheckBoxList
                                 title={"Availability"}
+                                value={availability}
                                 names={["Full-time", "Internship"]}
                                 onChange={setAvailability}
                             />

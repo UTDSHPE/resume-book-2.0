@@ -3,7 +3,7 @@ import { useReducer } from "react";
 
 export type Availability = "Full-time" | "Internship";
 export type GradSemester = "Spring" | "Fall" | null;
-
+import type { SocialPlatform } from "@/components/filterComponents/LinkInput";
 export type ProfileForm = {
     firstName: string;
     lastName: string;
@@ -18,12 +18,7 @@ export type ProfileForm = {
     workAuthorized: boolean;
     profilePhoto: string | null;
     resumeUrl: string | null;
-
-    // ⬇️ NEW: one URL per platform
-    githubUrl: string | null;
-    linkedinUrl: string | null;
-    twitterUrl: string | null;   // x.com/twitter profiles
-    websiteUrl: string | null;
+    links:SocialPlatform[];
 };
 
 export const initial: ProfileForm = {
@@ -40,12 +35,7 @@ export const initial: ProfileForm = {
     workAuthorized: false,
     profilePhoto: null,
     resumeUrl: null,
-
-    // ⬇️ NEW
-    githubUrl: null,
-    linkedinUrl: null,
-    twitterUrl: null,
-    websiteUrl: null,
+    links: [],
 };
 
 export type Action =
