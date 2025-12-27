@@ -5,6 +5,7 @@ import { DropDown } from "@/components/filterComponents/DropDown";
 import { NumberValidator } from "@/components/filterComponents/Validator";
 import { CheckBoxList, CheckBox } from "@/components/filterComponents/CheckBox";
 import AccordionSearch from "./_components/AccordionSearch/AccordionSearch";
+import { mockStudents } from "./dummy_data";
 
 export default function RecruiterDashboard() {
   const [workAuthorized, setWorkAuthorized] = useState(false);
@@ -12,6 +13,8 @@ export default function RecruiterDashboard() {
   const [year, setYear] = useState<string[]>([]);
   const [semester, setSemester] = useState<string[]>([]);
   const [major, setMajor] = useState<string[]>([]);
+  const [graduationYear, setGraduationYear] = useState<number | null>(null);
+  const [gpa, setGpa] = useState<number | null>(null);
 
   return (
     <div className="w-full h-screen relative">
@@ -70,6 +73,8 @@ export default function RecruiterDashboard() {
                 max={2100}
                 className="input-md"
                 headTitle="Graduation Year"
+                value={graduationYear}
+                onChange={setGraduationYear}
               />
 
               <NumberValidator
@@ -78,6 +83,8 @@ export default function RecruiterDashboard() {
                 className=""
                 decimal={true}
                 headTitle={"GPA"}
+                value={gpa}
+                onChange={setGpa}
               />
 
               <CheckBox
@@ -103,7 +110,7 @@ export default function RecruiterDashboard() {
         {/* Main content */}
         <main className="flex-1 bg-white p-4">
           {/* Results go here */}
-          <AccordionSearch />
+          <AccordionSearch users={mockStudents} />
         </main>
       </div>
     </div>

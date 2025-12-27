@@ -22,7 +22,7 @@ export default function RoleRedirect() {
     user.getIdTokenResult(true).then((idTokenResult) => {
       const role = idTokenResult.claims.role;
       if (!role) {
-        router.replace("/dashboard/recruiter");
+        router.replace("/");
       } else {
         router.replace(`/dashboard/${role}`);
       }
