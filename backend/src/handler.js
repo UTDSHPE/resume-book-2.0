@@ -3,7 +3,7 @@ import admin from "firebase-admin";
 import { linkedInRedirectURL, handleLinkedInCallback } from "./functions/auth/linkedin.js";
 import { createInvite } from "./functions/invites/createInvite.js"
 import { redeemInvite } from "./functions/invites/redeemInvite.js";
-
+import {auth} from "./functions/auth/firebase.js"
 // Initialize Firebase Admin once, shared across routes
 if (!admin.apps.length) {
     console.log("[INIT] Initializing Firebase Admin...");

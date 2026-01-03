@@ -1,9 +1,15 @@
 service: resumebook-backend
 frameworkVersion: '4'
 
+build:
+  esbuild:
+    bundle: true
+    format: esm
+
 package:
   individually: true
   excludeDevDependencies: true
+
 
 provider:
   name: aws
@@ -18,10 +24,16 @@ provider:
     LINKEDIN_REDIRECT_URI: ${env:LINKEDIN_REDIRECT_URI}
     FRONTEND_REDIRECT_URI: ${env:FRONTEND_REDIRECT_URI}
 
-# Disable v4's native esbuild so it doesn't try to stage .serverless/build/package.json
-build:
-  esbuild: false
+plugins: 
+  - serverless-offline # Simulate lambda locally
 
+useDotenv: true 
+
+custom: 
+  serverless-offline: 
+    httpPort: 4000
+    lambdaPort: 4001
+  
 functions:
   api:
     handler: src/handler.main

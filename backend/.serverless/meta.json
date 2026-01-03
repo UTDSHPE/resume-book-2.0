@@ -1,0 +1,167 @@
+{
+  "/home/rjg/coding/shpe/resume-book-2.0/backend/serverless.yml": {
+    "versionFramework": "4.29.3",
+    "servicePath": "/home/rjg/coding/shpe/resume-book-2.0/backend/serverless.yml",
+    "serviceConfigFileName": "serverless.yml",
+    "service": {
+      "service": "resumebook-backend",
+      "frameworkVersion": "4",
+      "build": {
+        "esbuild": {
+          "bundle": true,
+          "format": "esm"
+        }
+      },
+      "package": {
+        "individually": true,
+        "excludeDevDependencies": true
+      },
+      "provider": {
+        "name": "aws",
+        "runtime": "nodejs20.x",
+        "region": "us-east-1",
+        "stage": "prod",
+        "environment": {
+          "FIREBASE_PROJECT_ID": "${env:FIREBASE_PROJECT_ID}",
+          "FIREBASE_PRIVATE_KEY": "<REDACTED>",
+          "LINKEDIN_CLIENT_ID": "${env:LINKEDIN_CLIENT_ID}",
+          "LINKEDIN_CLIENT_SECRET": "<REDACTED>",
+          "LINKEDIN_REDIRECT_URI": "${env:LINKEDIN_REDIRECT_URI}",
+          "FRONTEND_REDIRECT_URI": "${env:FRONTEND_REDIRECT_URI}"
+        }
+      },
+      "plugins": [
+        "serverless-dotenv-plugin",
+        "serverless-offline"
+      ],
+      "useDotenv": true,
+      "functions": {
+        "api": {
+          "handler": "src/handler.main",
+          "package": {
+            "patterns": [
+              "src/**",
+              "package.json",
+              "package-lock.json",
+              "node_modules/**"
+            ]
+          },
+          "events": [
+            {
+              "http": {
+                "path": "auth/linkedin",
+                "method": "get",
+                "cors": {
+                  "origin": "*",
+                  "headers": [
+                    "Content-Type",
+                    "Authorization"
+                  ],
+                  "allowCredentials": "<REDACTED>"
+                }
+              }
+            },
+            {
+              "http": {
+                "path": "auth/linkedin/callback",
+                "method": "get",
+                "cors": {
+                  "origin": "*",
+                  "headers": [
+                    "Content-Type",
+                    "Authorization"
+                  ],
+                  "allowCredentials": "<REDACTED>"
+                }
+              }
+            },
+            {
+              "http": {
+                "path": "student/create-invite",
+                "method": "post",
+                "cors": {
+                  "origin": "*",
+                  "headers": [
+                    "Content-Type",
+                    "Authorization"
+                  ],
+                  "allowCredentials": "<REDACTED>"
+                }
+              }
+            },
+            {
+              "http": {
+                "path": "student/redeem-invite",
+                "method": "post",
+                "cors": {
+                  "origin": "*",
+                  "headers": [
+                    "Content-Type",
+                    "Authorization"
+                  ],
+                  "allowCredentials": "<REDACTED>"
+                }
+              }
+            },
+            {
+              "http": {
+                "path": "admin/create-invite",
+                "method": "post",
+                "cors": {
+                  "origin": "*",
+                  "headers": [
+                    "Content-Type",
+                    "Authorization"
+                  ],
+                  "allowCredentials": "<REDACTED>"
+                }
+              }
+            },
+            {
+              "http": {
+                "path": "admin/redeem-invite",
+                "method": "post",
+                "cors": {
+                  "origin": "*",
+                  "headers": [
+                    "Content-Type",
+                    "Authorization"
+                  ],
+                  "allowCredentials": "<REDACTED>"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "nodejs20.x",
+      "region": "us-east-1",
+      "stage": "prod",
+      "environment": {
+        "FIREBASE_PROJECT_ID": "${env:FIREBASE_PROJECT_ID}",
+        "FIREBASE_PRIVATE_KEY": "<REDACTED>",
+        "LINKEDIN_CLIENT_ID": "${env:LINKEDIN_CLIENT_ID}",
+        "LINKEDIN_CLIENT_SECRET": "<REDACTED>",
+        "LINKEDIN_REDIRECT_URI": "${env:LINKEDIN_REDIRECT_URI}",
+        "FRONTEND_REDIRECT_URI": "${env:FRONTEND_REDIRECT_URI}"
+      }
+    },
+    "error": {
+      "message": "You must sign in or use a license key with Serverless Framework V.4 and later versions. Please use \"serverless login\".",
+      "stack": "Error: You must sign in or use a license key with Serverless Framework V.4 and later versions. Please use \"serverless login\".\n    at Authentication.getAuthenticatedData (file:///home/rjg/.serverless/releases/4.29.3/package/dist/sf-core.js:678:11564)\n    at async Authentication.authenticate (file:///home/rjg/.serverless/releases/4.29.3/package/dist/sf-core.js:681:4121)\n    at async _CoreRunner.authenticate (file:///home/rjg/.serverless/releases/4.29.3/package/dist/sf-core.js:689:2831)\n    at async _CoreRunner.run (file:///home/rjg/.serverless/releases/4.29.3/package/dist/sf-core.js:1154:6830)\n    at async route (file:///home/rjg/.serverless/releases/4.29.3/package/dist/sf-core.js:1665:2848)\n    at async Object.run (file:///home/rjg/.serverless/releases/4.29.3/package/dist/sf-core.js:1666:3876)\n    at async run2 (file:///home/rjg/.serverless/releases/4.29.3/package/dist/sf-core.js:1666:5030)"
+    },
+    "serviceRawFile": "service: resumebook-backend\nframeworkVersion: '4'\n\nbuild:\n  esbuild:\n    bundle: true\n    format: esm\n\npackage:\n  individually: true\n  excludeDevDependencies: true\n\nprovider:\n  name: aws\n  runtime: nodejs20.x\n  region: us-east-1\n  stage: ${opt:stage, 'prod'}\n  environment:\n    FIREBASE_PROJECT_ID: ${env:FIREBASE_PROJECT_ID}\n    FIREBASE_PRIVATE_KEY: ${env:FIREBASE_PRIVATE_KEY}\n    LINKEDIN_CLIENT_ID: ${env:LINKEDIN_CLIENT_ID}\n    LINKEDIN_CLIENT_SECRET: ${env:LINKEDIN_CLIENT_SECRET}\n    LINKEDIN_REDIRECT_URI: ${env:LINKEDIN_REDIRECT_URI}\n    FRONTEND_REDIRECT_URI: ${env:FRONTEND_REDIRECT_URI}\n\nplugins: \n  - serverless-dotenv-plugin # Must be first to load env vars from .env file\n  - serverless-offline # Simulate lambda locally\n\nuseDotenv: true \n\nfunctions:\n  api:\n    handler: src/handler.main\n    package:\n      patterns:\n        - src/**\n        - package.json\n        - package-lock.json\n        - node_modules/** # include backend deps right from backend/\n    events:\n      - http:\n          path: auth/linkedin\n          method: get\n          cors:\n            origin: \"*\"\n            headers:\n              - Content-Type\n              - Authorization\n            allowCredentials: false\n      - http:\n          path: auth/linkedin/callback\n          method: get\n          cors:\n            origin: \"*\"\n            headers:\n              - Content-Type\n              - Authorization\n            allowCredentials: false\n      - http:\n          path: student/create-invite\n          method: post\n          cors:\n            origin: \"*\"\n            headers:\n              - Content-Type\n              - Authorization\n            allowCredentials: false\n      - http:\n          path: student/redeem-invite\n          method: post\n          cors:\n            origin: \"*\"\n            headers:\n              - Content-Type\n              - Authorization\n            allowCredentials: false\n      - http:\n          path: admin/create-invite\n          method: post\n          cors:\n            origin: \"*\"\n            headers:\n              - Content-Type\n              - Authorization\n            allowCredentials: false\n      - http:\n          path: admin/redeem-invite\n          method: post\n          cors:\n            origin: \"*\"\n            headers:\n              - Content-Type\n              - Authorization\n            allowCredentials: false\n",
+    "command": [
+      "login"
+    ],
+    "options": {},
+    "serviceProviderAwsCfStackId": null,
+    "serviceProviderAwsCfStackCreated": null,
+    "serviceProviderAwsCfStackUpdated": null,
+    "serviceProviderAwsCfStackStatus": null,
+    "serviceProviderAwsCfStackOutputs": null
+  }
+}

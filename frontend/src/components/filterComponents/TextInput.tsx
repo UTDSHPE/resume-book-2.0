@@ -104,7 +104,7 @@ const GenerateCodeButton = () => {
             setMessage("");
             const headers = await getAuthHeaders();
             const invokeURL =
-                process.env.NEXT_PUBLIC_API_GATEWAY_INVOKE_URL + "student/create-invite";
+                process.env.NEXT_PUBLIC_API_GATEWAY_INVOKE_URL + "/student/create-invite";
 
             const res = await axios.post(invokeURL, { uid: user.uid }, { headers });
 
@@ -129,8 +129,8 @@ const GenerateCodeButton = () => {
             setMessage("");
             const headers = await getAuthHeaders();
             const invokeURL =
-                process.env.NEXT_PUBLIC_API_GATEWAY_INVOKE_URL + "admin/create-invite";
-
+                process.env.NEXT_PUBLIC_API_GATEWAY_INVOKE_URL + "/admin/create-invite";
+            
             const res = await axios.post(
                 invokeURL,
                 { uid: user.uid, role: targetRole },

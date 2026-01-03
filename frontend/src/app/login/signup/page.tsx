@@ -6,7 +6,7 @@ import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, si
 import { auth } from '@/lib/firebase'; 
 import { FcGoogle } from "react-icons/fc";
 import { FaLinkedin } from "react-icons/fa6";
-
+import { handleLinkedInLogin } from '@/lib/linkedin';
 
 export default function signUpPage(){
     const [email, setEmail] = useState('');
@@ -14,8 +14,13 @@ export default function signUpPage(){
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    const handleLinkedInSignup= async () => {
-        window.location.href = 'https://yjsky4tmql.execute-api.us-east-1.amazonaws.com/prod/auth/linkedin';
+    const handleLinkedInClick = async () => {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        if (!apiUrl) {
+            alert('Frontend URL is not configured. Please check your environment variables.');
+            return;
+        }
+        await handleLinkedInLogin(apiUrl);
     };
 
 
@@ -73,7 +78,7 @@ export default function signUpPage(){
                         </button>
                         <button
                             type="button"
-                            onClick={handleLinkedInSignup}
+                            onClick={handleLinkedInClick}
                             className="flex items-center gap-2 bg-white hover:bg-gray-100 text-black border border-gray-300 px-4 py-2 rounded-sm shadow-sm focus:outline-none focus:ring-2 mx-auto my-2"
                         >
                             <FaLinkedin size={20} className='text-[#0077B5]' />
